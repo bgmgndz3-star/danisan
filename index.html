@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danışan Portalı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday-professional, calm and warm: a private practice's own portal for its clients
+   IDEA the practice's appointment book: day pages with hanging times, and one personal file per client
+   PICTURE the working app itself: request cards, the agenda with large hanging times, the slot picker
+   COLOUR white ground, deep plum band, lavender panels, coral for the one action that matters
+   TYPE Outfit for headings and figures + Inter for text
+   LAYOUT plum band with name and tabs; content up to 1120px, two columns above 900px, one column on phones */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#14111b);--ink:light-dark(#1f1a2b,#efeaf7);--muted:light-dark(#625b72,#a9a1b9);--band:#2b2140;--bandink:#f4effc;--soft:light-dark(#f3eff9,#1e1828);--line:light-dark(#e3dcee,#352c44);--acc:light-dark(#d9472f,#ff7a63);--accink:light-dark(#ffffff,#1b1422);--ok:light-dark(#2c7a57,#6fd3a5);--warn:light-dark(#9a6200,#f2b84b);--bad:light-dark(#b3261e,#ff8a80)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Outfit,Inter,sans-serif;letter-spacing:-.01em;line-height:1.15;margin:0}
+h2{font-size:24px;margin-bottom:12px}
+h3{font-size:18px}
+p{margin:0 0 8px}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,4vw);padding-right:max(16px,4vw)}
+.demo{background:light-dark(#fff3d6,#3a2c08);color:var(--ink);font-size:14px}
+.demo .wrap{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-block:8px}
+.top{background:var(--band);color:var(--bandink)}
+.top .wrap{padding-block:22px 0}
+.brand{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end}
+.brand h1{font-size:clamp(26px,4vw,38px);font-weight:600}
+.brand p{margin:4px 0 0;opacity:.8}
+.who{font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;margin-top:20px;overflow-x:auto;scrollbar-width:none}
+.tabs button{flex:none;background:none;border:0;color:var(--bandink);opacity:.75;font:500 15px Inter,sans-serif;padding:12px 14px;border-radius:12px 12px 0 0;cursor:pointer;min-height:44px}
+.tabs button[aria-current=true]{background:var(--bg);color:var(--ink);opacity:1}
+.tabs button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.badge{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:10px;background:var(--acc);color:var(--accink);font-size:12px;line-height:20px;text-align:center}
+main{padding-block:24px 64px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px}
+.kpi{background:var(--soft);border-radius:14px;padding:14px 16px}
+.kpi b{display:block;font:600 clamp(24px,3vw,30px) Outfit,sans-serif;white-space:nowrap}
+.kpi span{color:var(--muted);font-size:14px}
+.cols{display:grid;gap:28px}
+@media(min-width:900px){.cols{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}}
+.panel{background:var(--soft);border-radius:16px;padding:18px}
+.panel h3{margin-bottom:10px}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.chip{display:inline-block;font:500 13px Inter,sans-serif;padding:2px 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap;vertical-align:2px}
+.c-pending{color:var(--warn)}.c-confirmed{color:var(--ok)}.c-completed{color:var(--muted)}.c-declined,.c-cancelled,.c-no_show{color:var(--bad)}.c-new{color:var(--acc)}
+button,.btn{font:500 15px Inter,sans-serif;min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button:hover,.btn:hover{border-color:var(--muted)}
+button:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.primary{background:var(--acc);border-color:var(--acc);color:var(--accink)}
+.primary:hover{filter:brightness(1.07);border-color:var(--acc)}
+.link{border:0;background:none;padding:6px 4px;min-height:36px;text-decoration:underline;color:inherit}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.spread{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:12px}
+label{display:block;font-weight:500;font-size:15px;margin-bottom:12px}
+label>input,label>textarea,label>select{margin-top:6px}
+input,textarea,select{font:16px Inter,sans-serif;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-height:44px}
+textarea{min-height:90px;resize:vertical}
+.check{display:flex;gap:10px;align-items:flex-start;font-weight:400}
+.check input{width:22px;min-height:22px;margin:2px 0 0;flex:none}
+.grid2f{display:grid;gap:0 16px}
+@media(min-width:640px){.grid2f{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.req{display:grid;grid-template-columns:76px minmax(0,1fr);gap:16px;padding:18px 0;border-top:1px solid var(--line)}
+.req:first-of-type{border-top:0}
+.date{background:var(--band);color:var(--bandink);border-radius:14px;text-align:center;padding:10px 4px;align-self:start}
+.date b{display:block;font:600 30px/1 Outfit,sans-serif}
+.date span{font-size:13px;opacity:.85}
+.when{font:600 20px Outfit,sans-serif;margin:4px 0}
+blockquote{margin:8px 0 12px;padding:8px 12px;border-left:3px solid var(--line);color:var(--muted);font-style:italic}
+.agenda{list-style:none;margin:0 0 22px;padding:0}
+.agenda li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:4px 14px;padding:12px 0;border-top:1px solid var(--line)}
+.agenda time{font:600 22px Outfit,sans-serif;white-space:nowrap}
+.agenda .acts{grid-column:2;display:flex;flex-wrap:wrap;gap:6px}
+.agenda .acts button,.agenda .acts .btn{min-height:38px;padding:6px 12px;font-size:14px}
+.dayh{font:600 15px Inter,sans-serif;color:var(--muted);margin:18px 0 4px}
+.days{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px}
+.day{flex:none;scroll-snap-align:start;flex-direction:column;width:82px;padding:10px 4px;gap:0;line-height:1.2}
+.day b{font:600 26px Outfit,sans-serif}
+.day small{font-size:13px;color:var(--muted);margin-top:4px}
+.day[aria-pressed=true]{background:var(--band);color:var(--bandink);border-color:var(--band)}
+.day[aria-pressed=true] small{color:var(--bandink);opacity:.8}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:14px 0 20px}
+.slots button{font:600 18px Outfit,sans-serif}
+.slots button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--accink)}
+.next{background:var(--band);color:var(--bandink);border-radius:18px;padding:20px 22px;margin-bottom:26px;display:grid;gap:6px 24px;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+.next .big{font:600 clamp(24px,4vw,34px)/1.1 Outfit,sans-serif}
+.next .chip{color:var(--bandink)}
+@media(max-width:600px){.next{grid-template-columns:1fr}}
+.note{border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:14px}
+.note ul{margin:10px 0;padding-left:20px}
+.note li{margin-bottom:6px}
+.hw{background:var(--soft);border-radius:12px;padding:10px 14px;margin-top:10px}
+.list{list-style:none;padding:0;margin:0}
+.list li{padding:12px 0;border-top:1px solid var(--line)}
+.unread{font-weight:600}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:500;color:var(--muted);font-size:14px}
+td.num,th.num{text-align:right;white-space:nowrap}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--soft)}
+.nowrap{white-space:nowrap}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:16px}
+.center{max-width:460px;margin:40px auto}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);display:grid;gap:8px;z-index:20;width:min(92vw,440px)}
+#toast div{background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-size:15px;box-shadow:0 6px 20px rgb(0 0 0/.2)}
+#modal{position:fixed;inset:0;background:rgb(20 14 28/.55);display:grid;place-items:center;z-index:30;padding:16px}
+#modal[hidden]{display:none}
+#modal .box{background:var(--bg);border-radius:18px;padding:22px;max-width:440px;width:100%}
+#modal .row{justify-content:flex-end;margin-top:16px}
+.preview{border:1px dashed var(--line);border-radius:14px;padding:14px 16px;margin-top:8px}
+@media(prefers-reduced-motion:no-preference){.fade{animation:fade .25s ease-out}@keyframes fade{from{opacity:0;transform:translateY(4px)}}}
+@media(max-width:600px){table{font-size:14px}th,td{padding:8px 4px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flex;justify-content:space-between;gap:12px;border:0;padding:3px 0;text-align:right}.stack td::before{content:attr(data-l);color:var(--muted);text-align:left}.stack td:empty{display:none}.req{grid-template-columns:60px minmax(0,1fr);gap:12px}.date b{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="demo" id="demobar" hidden><div class="wrap">
+  <b>Demo</b><span>Görünüm:</span>
+  <button id="demo-t" data-act="demoRole" data-r="therapist">Psikolog paneli</button>
+  <button id="demo-c" data-act="demoRole" data-r="client">Danışan portalı (Elif Y.)</button>
+  <span class="small">Tüm kişiler ve notlar örnektir; e-postalar demoda gönderilmez.</span>
+</div></div>
+<header class="top"><div class="wrap">
+  <div class="brand"><div><h1 id="pname">Danışan Portalı</h1><p id="psub"></p></div><div class="who" id="who"></div></div>
+  <nav class="tabs" id="tabs" aria-label="Bölümler"></nav>
+</div></header>
+<main class="wrap" id="app"><p class="muted">Yükleniyor…</p></main>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="modal" hidden></div>
+<script>window.APP_CONFIG=window.APP_CONFIG||null;</script>
+<script src="config.js"></script>
+<script>
+{
+const CFG = window.APP_CONFIG && window.APP_CONFIG.supabaseUrl ? window.APP_CONFIG : null;
+const TZ = 'Europe/Istanbul', OFF = 3 * 3600e3, HOUR = 3600e3, DAY = 86400e3;
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const F = o => new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, ...o });
+const fDay = F({ weekday: 'long', day: 'numeric', month: 'long' }), fTime = F({ hour: '2-digit', minute: '2-digit' });
+const fShort = F({ day: 'numeric', month: 'short', year: 'numeric' }), fWd = F({ weekday: 'short' }), fMon = F({ month: 'short' }), fNum = F({ day: 'numeric' });
+const fStamp = F({ day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const rtf = new Intl.RelativeTimeFormat('tr', { numeric: 'auto' });
+const ymdOf = t => new Date(+new Date(t) + OFF).toISOString().slice(0, 10);
+const addDays = (ymd, n) => { const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const wdOf = ymd => new Date(ymd + 'T12:00:00Z').getUTCDay();
+const slotISO = (ymd, hm) => `${ymd}T${hm}:00+03:00`;
+const dateOfYmd = ymd => new Date(ymd + 'T12:00:00+03:00');
+const when = t => `${fDay.format(new Date(t))} · ${fTime.format(new Date(t))}`;
+const rel = t => { const d = +new Date(t) - Date.now(), a = Math.abs(d);
+  if (a < HOUR) return rtf.format(Math.round(d / 60000), 'minute');
+  if (a < DAY) return rtf.format(Math.round(d / HOUR), 'hour');
+  return rtf.format(Math.round(d / DAY), 'day'); };
+const money = n => { if (n == null || n === '') return '—'; try { return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: S.settings?.currency || 'TRY', maximumFractionDigits: 0 }).format(+n); } catch { return (+n).toLocaleString('tr-TR') + ' ' + (S.settings?.currency || ''); } };
+const STATUS = { pending: 'Onay bekliyor', confirmed: 'Onaylandı', declined: 'Uygun değil', cancelled: 'İptal', completed: 'Tamamlandı', no_show: 'Gelmedi' };
+const MODE = { yuz_yuze: 'Yüz yüze', online: 'Online' };
+const chip = st => `<span class="chip c-${esc(st)}">${esc(STATUS[st] || st)}</span>`;
+const WD = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+const waLink = (phone, text) => { let d = String(phone || '').replace(/\D/g, ''); if (!d) return '';
+  if (d.startsWith('0')) d = '9' + d; else if (d.length === 10 && d.startsWith('5')) d = '90' + d;
+  return `https://wa.me/${d}?text=${encodeURIComponent(text)}`; };
+
+const S = { api: null, me: null, settings: null, clients: [], appts: [], notes: [], notifs: [], busy: [], tab: null, clientId: null,
+  pick: { day: null, slot: null, mode: 'yuz_yuze', note: '' }, draft: null, showNew: false, declineId: null, loginSent: '', loaded: false };
+
+function toast(m) { const d = document.createElement('div'); d.className = 'fade'; d.textContent = m; $('#toast').append(d); setTimeout(() => d.remove(), 4200); }
+function ask(title, text, ok = 'Evet', danger) {
+  return new Promise(res => { const m = $('#modal');
+    m.innerHTML = `<div class="box" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">${esc(title)}</h3><p class="muted" style="margin-top:8px">${esc(text)}</p><div class="row"><button id="m-no">Vazgeç</button><button id="m-ok" class="primary">${esc(ok)}</button></div></div>`;
+    m.hidden = false; $('#m-ok').focus();
+    const done = v => { m.hidden = true; m.innerHTML = ''; res(v); };
+    $('#m-no').onclick = () => done(false); $('#m-ok').onclick = () => done(true);
+    m.onclick = e => { if (e.target === m) done(false); }; }); }
+const errMsg = e => { const m = e?.message || String(e); if (/appointments_slot_unique|duplicate key/.test(m)) return 'Bu saat az önce doldu. Lütfen başka bir saat seçin.'; return m; };
+
+/* ---------------- Demo veri katmanı ---------------- */
+function demoApi() {
+  const today = ymdOf(Date.now());
+  const at = (off, hm) => { let d = addDays(today, off); while ([0, 6].includes(wdOf(d))) d = addDays(d, off < 0 ? -1 : 1); return slotISO(d, hm); };
+  const iso = t => new Date(t).toISOString();
+  let role = 'therapist', n = 0; const id = () => 'd' + (++n);
+  const T = { id: 't1', email: 'deniz@ornek.com', role: 'therapist', full_name: 'Deniz Aydın' };
+  const settings = { id: 1, practice_name: 'Deniz Aydın Psikolojik Danışmanlık', therapist_name: 'Deniz Aydın', title: 'Uzm. Klinik Psikolog', phone: '0555 000 00 00', email: 'deniz@ornek.com', address: 'Örnek Mah. Huzur Sok. No:5 D:3, Kadıköy / İstanbul', online_link: 'https://meet.ornek.com/deniz-aydin', session_minutes: 50, default_fee: 2500, currency: 'TRY',
+    weekly_hours: { 1: ['10:00', '11:00', '13:00', '14:00', '15:00', '16:00'], 2: ['10:00', '11:00', '13:00', '14:00', '15:00', '16:00'], 3: ['10:00', '11:00', '13:00', '14:00'], 4: ['10:00', '11:00', '13:00', '14:00', '15:00', '16:00'], 5: ['10:00', '11:00', '13:00', '14:00'] },
+    blocked_dates: [], horizon_days: 21, min_notice_hours: 12, cancel_hours: 24,
+    cancel_policy: 'Seanstan 24 saat öncesine kadar yapılan iptallerde ücret alınmaz. Daha geç iptaller ve gelinmeyen seanslar ücretlendirilir.',
+    kvkk_text: 'Randevu bilgilerimin ve seans notlarımın, psikolojik danışmanlık hizmetinin yürütülmesi amacıyla bu portalda saklanmasına ve yalnızca psikoloğum tarafından işlenmesine açık rıza veriyorum.', reminder_hours: [24, 1] };
+  const consent = iso(Date.now() - 30 * DAY);
+  const clients = [
+    { id: 'c1', role: 'client', full_name: 'Elif Yılmaz', phone: '0555 000 11 22', email: 'elif@ornek.com', fee: 2500, kvkk_consent_at: consent },
+    { id: 'c2', role: 'client', full_name: 'Mert Kaya', phone: '0555 000 33 44', email: 'mert@ornek.com', fee: 2200, kvkk_consent_at: consent },
+    { id: 'c3', role: 'client', full_name: 'Zeynep Arslan', phone: '0555 000 55 66', email: 'zeynep@ornek.com', fee: null, kvkk_consent_at: iso(Date.now() - 2 * HOUR) },
+    { id: 'c4', role: 'client', full_name: 'Can Demir', phone: '0555 000 77 88', email: 'can@ornek.com', fee: 2500, kvkk_consent_at: consent }];
+  const A = (client_id, starts_at, status, extra = {}) => ({ id: id(), client_id, starts_at: iso(starts_at), duration_min: 50, mode: 'yuz_yuze', status, client_note: '', fee: clients.find(c => c.id === client_id).fee ?? settings.default_fee, paid: status === 'completed', created_at: iso(+new Date(starts_at) - 5 * DAY), decided_at: iso(+new Date(starts_at) - 4 * DAY), ...extra });
+  const appts = [
+    A('c1', at(-21, '14:00'), 'completed'), A('c1', at(-14, '14:00'), 'completed'), A('c1', at(-7, '14:00'), 'completed'),
+    A('c1', at(2, '14:00'), 'confirmed'),
+    A('c2', at(-10, '11:00'), 'completed'), A('c2', at(-3, '11:00'), 'completed', { paid: false, mode: 'online' }),
+    A('c2', at(4, '11:00'), 'pending', { mode: 'online', client_note: 'Mümkünse online olsun, o hafta şehir dışındayım.', created_at: iso(Date.now() - 3 * HOUR) }),
+    A('c3', at(1, '16:00'), 'pending', { client_note: 'İlk kez görüşeceğiz, uyku sorunlarım için destek almak istiyorum.', created_at: iso(Date.now() - 40 * 60000) }),
+    A('c4', at(-6, '10:00'), 'completed', { paid: false }), A('c4', at(-1, '15:00'), 'confirmed'),
+    A('c4', at(1, '10:00'), 'confirmed', { mode: 'online' })];
+  const notes = [
+    { id: id(), client_id: 'c1', session_date: addDays(today, -14), title: 'İlk değerlendirmenin özeti', points: ['Başvuru nedenin: son altı aydır artan kaygı ve uykuya dalmada güçlük.', 'Destek sistemin: yakın bir arkadaşın ve kız kardeşin; aile ile iletişim zaman zaman zorlayıcı.', 'Ortak hedeflerimiz: kaygıyı erken fark etmek ve yönetmek, uyku düzenini oturtmak, iş ile özel yaşam arasındaki sınırı netleştirmek.', 'Haftada bir, 50 dakikalık seanslarla ilerlemeye karar verdik.'], homework: '', created_at: iso(Date.now() - 14 * DAY), read_at: iso(Date.now() - 13 * DAY) },
+    { id: id(), client_id: 'c1', session_date: addDays(today, -7), title: 'Kaygıyla baş etme ve uyku', points: ['Toplantılardan önce yoğunlaşan kaygıyı konuştuk; çarpıntı ve mide sıkışmasını artık erken fark edebiliyorsun.', 'Kaygı anında düşünceyle tartışmak yerine önce nefesi yavaşlatmanın (4 saniye al, 6 saniye ver) işe yaradığını gördük.', 'Uykuya geçişi zorlaştıran “yatakta plan yapma” alışkanlığını fark ettik.', 'Eleştirel iç sesin sıklıkla “yetersizim” temasına döndüğünü birlikte not ettik.'], homework: 'Yatmadan 30 dakika önce ekranı bırak; aklına gelen işleri kâğıda yazıp kenara koy. Hafta boyunca kaygı anlarını 0–10 arasında puanlayıp kısa not al.', created_at: iso(Date.now() - 7 * DAY), read_at: null },
+    { id: id(), client_id: 'c2', session_date: addDays(today, -3), title: 'Sınır koyma', points: ['İş yerinde “hayır” diyememenin yarattığı yükü konuştuk.', 'Kısa ve net bir ret cümlesi üzerinde çalıştık.'], homework: 'Bu hafta küçük bir talebe nazikçe “bu hafta yetişemem” demeyi dene ve nasıl hissettirdiğini yaz.', created_at: iso(Date.now() - 3 * DAY), read_at: iso(Date.now() - 2 * DAY) }];
+  const notifs = [
+    { id: id(), client_id: 'c1', kind: 'not', title: 'Yeni seans notunuz eklendi', body: 'Geçen haftaki seansınızın çıkarımları portalınızda.', created_at: iso(Date.now() - 7 * DAY), read_at: null },
+    { id: id(), client_id: 'c1', kind: 'onay', title: 'Randevunuz onaylandı', body: when(at(2, '14:00')) + ' seansınız onaylandı.', created_at: iso(Date.now() - 2 * DAY), read_at: null }];
+  const meC = () => clients[0];
+  const notify = (client_id, kind, title, body) => notifs.unshift({ id: id(), client_id, kind, title, body, created_at: iso(Date.now()), read_at: null });
+  const mailNote = t => setTimeout(() => toast('Demo: ' + t), 600);
+  const clone = x => JSON.parse(JSON.stringify(x));
+  return {
+    demo: true, setRole(r) { role = r; },
+    async session() { return true; }, async signOut() {},
+    async me() { return clone(role === 'therapist' ? T : meC()); },
+    async saveProfile(p) { Object.assign(role === 'therapist' ? T : meC(), p); },
+    async getSettings() { return clone(settings); }, async saveSettings(s) { Object.assign(settings, s); },
+    async listClients() { return clone(clients); },
+    async setClientFee(cid, fee) { clients.find(c => c.id === cid).fee = fee; },
+    async listAppointments() { return clone(role === 'therapist' ? appts : appts.filter(a => a.client_id === meC().id)); },
+    async busySlots() { return clone(appts.filter(a => ['pending', 'confirmed'].includes(a.status)).map(a => ({ starts_at: a.starts_at, duration_min: a.duration_min }))); },
+    async requestAppointment(a) {
+      if (appts.some(x => ['pending', 'confirmed'].includes(x.status) && +new Date(x.starts_at) === +new Date(a.starts_at))) throw new Error('duplicate key appointments_slot_unique');
+      appts.push({ id: id(), client_id: meC().id, duration_min: settings.session_minutes, status: 'pending', fee: meC().fee ?? settings.default_fee, paid: false, created_at: iso(Date.now()), ...a, starts_at: iso(a.starts_at) });
+      mailNote('Psikoloğa “yeni randevu talebi” e-postası gider.'); },
+    async createAppointment(a) { const c = clients.find(x => x.id === a.client_id);
+      appts.push({ id: id(), duration_min: settings.session_minutes, fee: c.fee ?? settings.default_fee, paid: false, created_at: iso(Date.now()), decided_at: iso(Date.now()), ...a, starts_at: iso(a.starts_at) });
+      notify(a.client_id, 'onay', 'Randevunuz onaylandı', when(a.starts_at) + ' seansınız onaylandı.');
+      mailNote(`${c.full_name} adlı danışana onay e-postası gider.`); },
+    async updateAppointment(aid, p) { const a = appts.find(x => x.id === aid), old = a.status; Object.assign(a, p);
+      if (p.status && p.status !== old) { a.decided_at = iso(Date.now()); const c = clients.find(x => x.id === a.client_id);
+        if (role === 'therapist') {
+          if (p.status === 'confirmed') { notify(a.client_id, 'onay', 'Randevunuz onaylandı', when(a.starts_at) + ' seansınız onaylandı.'); mailNote(`${c.full_name} adlı danışana onay e-postası gider, seanstan 24 ve 1 saat önce hatırlatma gönderilir.`); }
+          if (p.status === 'declined') { notify(a.client_id, 'ret', 'Randevu talebiniz uygun değil', when(a.starts_at) + ' talebiniz onaylanamadı.' + (a.therapist_message ? ' Not: ' + a.therapist_message : '')); mailNote(`${c.full_name} adlı danışana bilgi e-postası gider.`); }
+          if (p.status === 'cancelled') { notify(a.client_id, 'iptal', 'Randevunuz iptal edildi', when(a.starts_at) + ' seansınız iptal edildi.'); mailNote(`${c.full_name} adlı danışana iptal e-postası gider.`); }
+        } else if (p.status === 'cancelled') mailNote('Psikoloğa iptal e-postası gider.'); } },
+    async listNotes() { return clone((role === 'therapist' ? notes : notes.filter(x => x.client_id === meC().id)).sort((a, b) => b.session_date.localeCompare(a.session_date))); },
+    async saveNote(x) { if (x.id) Object.assign(notes.find(y => y.id === x.id), x);
+      else { notes.push({ ...x, id: id(), created_at: iso(Date.now()), read_at: null }); notify(x.client_id, 'not', 'Yeni seans notunuz eklendi', fShort.format(dateOfYmd(x.session_date)) + ' tarihli seansınızın çıkarımları portalınızda.'); mailNote('Danışana “yeni notunuz portalda” e-postası gider (içerik e-postaya yazılmaz).'); } },
+    async deleteNote(nid) { notes.splice(notes.findIndex(y => y.id === nid), 1); },
+    async markNoteRead(nid) { const x = notes.find(y => y.id === nid); if (x && !x.read_at) x.read_at = iso(Date.now()); },
+    async listNotifications() { return clone(role === 'therapist' ? [] : notifs.filter(x => x.client_id === meC().id)); },
+    async markNotificationsRead() { notifs.forEach(x => { if (x.client_id === meC().id && !x.read_at) x.read_at = iso(Date.now()); }); }
+  };
+}
+
+/* ---------------- Supabase veri katmanı ---------------- */
+function loadScript(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Kütüphane yüklenemedi')); document.head.append(s); }); }
+async function supaApi() {
+  await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
+  const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+  const ok = r => { if (r.error) throw r.error; return r.data; };
+  let uid = null;
+  sb.auth.onAuthStateChange((ev, ses) => { const n = ses?.user?.id || null; if (n !== uid) { uid = n; load(); } });
+  return {
+    demo: false,
+    async session() { const s = (await sb.auth.getSession()).data.session; uid = s?.user?.id || null; return s; },
+    async signIn(email) { ok(await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } })); },
+    async verify(email, token) { ok(await sb.auth.verifyOtp({ email, token, type: 'email' })); },
+    async signOut() { await sb.auth.signOut(); },
+    async me() { if (!uid) return null; return ok(await sb.from('profiles').select('*').eq('id', uid).single()); },
+    async saveProfile(p) { ok(await sb.from('profiles').update(p).eq('id', uid)); },
+    async getSettings() { return ok(await sb.from('settings').select('*').eq('id', 1).single()); },
+    async saveSettings(s) { const { id, updated_at, ...rest } = s; ok(await sb.from('settings').update({ ...rest, updated_at: new Date().toISOString() }).eq('id', 1)); },
+    async listClients() { return ok(await sb.from('profiles').select('*').eq('role', 'client').order('full_name')); },
+    async setClientFee(cid, fee) { ok(await sb.from('profiles').update({ fee }).eq('id', cid)); },
+    async listAppointments() { return ok(await sb.from('appointments').select('*').order('starts_at')); },
+    async busySlots(from, to) { return ok(await sb.rpc('busy_slots', { p_from: from, p_to: to })); },
+    async requestAppointment(a) { ok(await sb.from('appointments').insert({ ...a, client_id: uid })); },
+    async createAppointment(a) { ok(await sb.from('appointments').insert(a)); },
+    async updateAppointment(aid, p) { ok(await sb.from('appointments').update(p).eq('id', aid)); },
+    async listNotes() { return ok(await sb.from('session_notes').select('*').order('session_date', { ascending: false })); },
+    async saveNote(x) { const { id, created_at, read_at, updated_at, mail_sent_at, ...rest } = x;
+      if (id) ok(await sb.from('session_notes').update(rest).eq('id', id)); else ok(await sb.from('session_notes').insert(rest)); },
+    async deleteNote(nid) { ok(await sb.from('session_notes').delete().eq('id', nid)); },
+    async markNoteRead(nid) { ok(await sb.rpc('mark_note_read', { p_id: nid })); },
+    async listNotifications() { return ok(await sb.from('notifications').select('*').eq('client_id', uid).order('created_at', { ascending: false }).limit(60)); },
+    async markNotificationsRead() { ok(await sb.rpc('mark_notifications_read')); }
+  };
+}
+
+/* ---------------- Yükleme ---------------- */
+let loading = false;
+async function load(quiet) {
+  if (loading) return; loading = true;
+  try {
+    const ses = await S.api.session();
+    if (!ses) { S.me = null; renderLogin(); return; }
+    S.me = await S.api.me();
+    if (!S.me) { renderLogin(); return; }
+    const isT = S.me.role === 'therapist';
+    const [st, ap, no, nf, cl] = await Promise.all([S.api.getSettings(), S.api.listAppointments(), S.api.listNotes(),
+      isT ? [] : S.api.listNotifications(), isT ? S.api.listClients() : []]);
+    Object.assign(S, { settings: st, appts: ap || [], notes: no || [], notifs: nf || [], clients: cl || [] });
+    if (!isT) { const now = Date.now(); S.busy = await S.api.busySlots(new Date(now).toISOString(), new Date(now + ((st.horizon_days || 21) + 1) * DAY).toISOString()) || []; }
+    if (!S.tab || !tabsFor().some(t => t[0] === S.tab)) S.tab = tabsFor()[0][0];
+    S.loaded = true;
+    const f = document.activeElement;
+    if (quiet && f && f.closest('#app') && /INPUT|TEXTAREA|SELECT/.test(f.tagName)) return;
+    render();
+  } catch (e) { console.error(e); $('#app').innerHTML = `<div class="empty">Veriler yüklenemedi: ${esc(errMsg(e))}</div>`; }
+  finally { loading = false; }
+}
+
+/* ---------------- Yardımcı hesaplar ---------------- */
+const cById = id => S.clients.find(c => c.id === id) || {};
+const isT = () => S.me?.role === 'therapist';
+const pending = () => S.appts.filter(a => a.status === 'pending' && +new Date(a.starts_at) > Date.now()).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+const ended = a => +new Date(a.starts_at) + (a.duration_min || 50) * 60000 < Date.now();
+const unreadNotes = () => S.notes.filter(n => !n.read_at).length;
+const unreadNotifs = () => S.notifs.filter(n => !n.read_at).length;
+function tabsFor() {
+  return isT() ? [['talepler', 'Talepler', pending().length], ['ajanda', 'Ajanda'], ['danisanlar', 'Danışanlar'], ['ayarlar', 'Ayarlar']]
+    : [['randevu', 'Randevu al'], ['randevularim', 'Randevularım'], ['notlar', 'Seans notlarım', unreadNotes()], ['bildirimler', 'Bildirimler', unreadNotifs()], ['hesap', 'Hesabım']];
+}
+function freeSlots() {
+  const s = S.settings, now = Date.now(), minT = now + (s.min_notice_hours || 0) * HOUR, today = ymdOf(now);
+  const busy = new Set(S.busy.map(b => +new Date(b.starts_at)));
+  S.appts.forEach(a => { if (['pending', 'confirmed'].includes(a.status)) busy.add(+new Date(a.starts_at)); });
+  const out = [];
+  for (let i = 0; i <= (s.horizon_days || 21); i++) {
+    const d = addDays(today, i), hours = (s.weekly_hours || {})[wdOf(d)] || [];
+    if ((s.blocked_dates || []).includes(d) || !hours.length) continue;
+    const slots = hours.map(h => slotISO(d, h)).filter(t => +new Date(t) > minT && !busy.has(+new Date(t)));
+    out.push({ d, slots });
+  }
+  return out;
+}
+function stats(cid) {
+  const mine = S.appts.filter(a => a.client_id === cid);
+  const done = mine.filter(a => a.status === 'completed').sort((a, b) => b.starts_at.localeCompare(a.starts_at));
+  const next = mine.filter(a => ['confirmed', 'pending'].includes(a.status) && !ended(a)).sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
+  const due = mine.filter(a => ['completed', 'no_show'].includes(a.status) && !a.paid).reduce((s, a) => s + (+a.fee || 0), 0);
+  return { mine, done, last: done[0], next, due };
+}
+const reminderText = (c, a) => `Merhaba ${(c.full_name || '').split(' ')[0]}, ${when(a.starts_at)} seansımızı hatırlatmak isterim. ${a.mode === 'online' ? (S.settings.online_link ? 'Görüşme bağlantısı: ' + S.settings.online_link : 'Görüşmemiz online olacak.') : (S.settings.address ? 'Adres: ' + S.settings.address : '')} ${S.settings.therapist_name || ''}`.trim();
+const confirmText = (c, a) => `Merhaba ${(c.full_name || '').split(' ')[0]}, ${when(a.starts_at)} tarihli seans randevunuz onaylanmıştır. Görüşmek üzere. ${S.settings.therapist_name || ''}`.trim();
+
+/* ---------------- Çizim ---------------- */
+function renderShell() {
+  const s = S.settings || {};
+  $('#pname').textContent = s.practice_name || 'Danışan Portalı';
+  $('#psub').textContent = isT() ? 'Psikolog paneli' : [s.title, s.therapist_name].filter(Boolean).join(' ') + ' · Danışan portalı';
+  $('#who').innerHTML = S.me ? `<span>${esc(S.me.full_name || S.me.email || '')}</span>${S.api.demo ? '' : '<button class="link" data-act="logout" style="color:inherit">Çıkış</button>'}` : '';
+  $('#tabs').innerHTML = S.me ? tabsFor().map(([k, l, b]) => `<button data-act="tab" data-t="${k}" aria-current="${S.tab === k}">${esc(l)}${b ? `<span class="badge">${b}</span>` : ''}</button>`).join('') : '';
+  if (S.api.demo) { $('#demobar').hidden = false; $('#demo-t').className = isT() ? 'primary' : ''; $('#demo-c').className = isT() ? '' : 'primary'; }
+}
+function render() {
+  renderShell();
+  if (!isT() && (!S.me.full_name || !S.me.kvkk_consent_at)) { $('#app').innerHTML = viewOnboard(); return; }
+  const v = { talepler: tRequests, ajanda: tAgenda, danisanlar: tClients, ayarlar: tSettings, randevu: cBook, randevularim: cMine, notlar: cNotes, bildirimler: cNotifs, hesap: cAccount }[S.tab];
+  $('#app').innerHTML = (isT() ? kpis() : nextCard()) + v();
+  if (S.tab === 'notlar') markNotesRead();
+  if (S.tab === 'bildirimler' && unreadNotifs()) S.api.markNotificationsRead().then(() => { S.notifs.forEach(n => n.read_at = n.read_at || new Date().toISOString()); renderShell(); });
+}
+function renderLogin() {
+  S.settings = null; renderShell(); $('#pname').textContent = CFG?.practiceName || 'Danışan Portalı'; $('#psub').textContent = 'Randevu ve seans notlarınız için giriş yapın';
+  $('#app').innerHTML = `<div class="center panel fade"><h2>Giriş yap</h2>
+    ${S.loginSent ? `<p>Giriş bağlantısı <b>${esc(S.loginSent)}</b> adresine gönderildi. E-postadaki bağlantıya tıklayın ya da varsa 6 haneli kodu girin.</p>
+      <form data-form="otp"><label>Kod<input name="code" inputmode="numeric" autocomplete="one-time-code" id="otp" required></label><div class="row"><button class="primary">Doğrula</button><button type="button" class="link" data-act="loginReset">Başka e-posta</button></div></form>`
+    : `<p class="muted">Şifre gerekmez. E-posta adresinize tek kullanımlık bir giriş bağlantısı gönderilir. İlk kez giriyorsanız hesabınız otomatik oluşturulur.</p>
+      <form data-form="login"><label>E-posta<input type="email" name="email" id="email" autocomplete="email" required></label><button class="primary">Giriş bağlantısı gönder</button></form>`}</div>`;
+}
+
+/* --- Psikolog --- */
+function kpis() {
+  const now = new Date(), today = ymdOf(now), wd = (wdOf(today) + 6) % 7, wStart = +dateOfYmd(addDays(today, -wd)) - 12 * HOUR, wEnd = wStart + 7 * DAY, mon = today.slice(0, 7);
+  const week = S.appts.filter(a => ['confirmed', 'completed'].includes(a.status) && +new Date(a.starts_at) >= wStart && +new Date(a.starts_at) < wEnd).length;
+  const inc = S.appts.filter(a => ['completed', 'no_show'].includes(a.status) && a.paid && ymdOf(a.starts_at).slice(0, 7) === mon).reduce((s, a) => s + (+a.fee || 0), 0);
+  const due = S.appts.filter(a => ['completed', 'no_show'].includes(a.status) && !a.paid).reduce((s, a) => s + (+a.fee || 0), 0);
+  return `<div class="kpis"><div class="kpi"><b>${pending().length}</b><span>Bekleyen talep</span></div><div class="kpi"><b>${week}</b><span>Bu haftaki seans</span></div><div class="kpi"><b>${money(inc)}</b><span>Bu ay tahsil edilen</span></div><div class="kpi"><b>${money(due)}</b><span>Bekleyen ödeme</span></div></div>`;
+}
+function dateBlock(t) { const d = new Date(t); return `<div class="date"><b>${fNum.format(d)}</b><span>${esc(fMon.format(d))}</span></div>`; }
+function tRequests() {
+  const p = pending();
+  const list = p.length ? p.map(a => { const c = cById(a.client_id), st = stats(a.client_id), fresh = !st.mine.some(x => ['completed', 'confirmed'].includes(x.status));
+    return `<article class="req fade">${dateBlock(a.starts_at)}<div>
+      <h3>${esc(c.full_name || c.email || 'Danışan')} ${fresh ? '<span class="chip c-new">Yeni danışan</span>' : ''}</h3>
+      <p class="when">${esc(when(a.starts_at))}</p>
+      <p class="muted small">${MODE[a.mode] || ''} · ${a.duration_min} dk · ${money(a.fee)} · ${esc(rel(a.created_at))} talep edildi${st.done.length ? ` · ${st.done.length} seans geçmişi` : ''}</p>
+      ${a.client_note ? `<blockquote>${esc(a.client_note)}</blockquote>` : ''}
+      <div class="row"><button class="primary" data-act="approve" data-id="${esc(a.id)}">Onayla</button><button data-act="declineOpen" data-id="${esc(a.id)}">Reddet / başka saat öner</button></div>
+      ${S.declineId === a.id ? `<form data-form="decline" data-id="${esc(a.id)}" style="margin-top:12px"><label>Danışana not (isteğe bağlı)<textarea name="msg" id="decline-msg" placeholder="Örn. Bu saat dolu, Perşembe 15:00 uygun olabilir."></textarea></label><div class="row"><button class="primary">Reddi gönder</button><button type="button" class="link" data-act="declineClose">Vazgeç</button></div></form>` : ''}
+    </div></article>`; }).join('') : `<div class="empty">Bekleyen talep yok. Danışanlarınız portaldan boş saatlerinizi seçtiğinde talepler burada görünür.</div>`;
+  return `<div class="cols"><section><h2>Randevu talepleri</h2>${list}</section><aside>${todayPanel()}</aside></div>`;
+}
+function todayPanel() {
+  const now = Date.now(), today = ymdOf(now);
+  const t = S.appts.filter(a => a.status === 'confirmed' && ymdOf(a.starts_at) === today).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const r = S.appts.filter(a => a.status === 'confirmed' && +new Date(a.starts_at) > now && +new Date(a.starts_at) < now + 26 * HOUR).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  return `<div class="panel"><h3>Bugün</h3>${t.length ? `<ul class="list">${t.map(a => `<li><b class="nowrap">${fTime.format(new Date(a.starts_at))}</b> · ${esc(cById(a.client_id).full_name)} <span class="muted small">${MODE[a.mode]}</span></li>`).join('')}</ul>` : '<p class="muted">Bugün onaylı seans yok.</p>'}
+    <h3 style="margin-top:18px">Yaklaşan hatırlatmalar</h3><p class="muted small">Onaylı danışanlara seanstan ${esc((S.settings.reminder_hours || []).join(' ve '))} saat önce otomatik e-posta gider. İsterseniz WhatsApp'tan da tek tıkla hatırlatabilirsiniz.</p>
+    ${r.length ? `<ul class="list">${r.map(a => { const c = cById(a.client_id), w = waLink(c.phone, reminderText(c, a)); return `<li><b>${esc(c.full_name)}</b><br><span class="small">${esc(when(a.starts_at))}</span>${w ? `<br><a class="btn" style="margin-top:6px;min-height:38px" href="${esc(w)}" target="_blank" rel="noopener">WhatsApp'tan hatırlat</a>` : ''}</li>`; }).join('')}</ul>` : '<p class="muted small">Önümüzdeki 24 saatte seans yok.</p>'}</div>`;
+}
+function tAgenda() {
+  const now = Date.now(), today = ymdOf(now);
+  const open = S.appts.filter(a => a.status === 'confirmed' && ended(a)).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const up = S.appts.filter(a => a.status === 'confirmed' && !ended(a) && +new Date(a.starts_at) < now + 21 * DAY).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const days = [...new Set(up.map(a => ymdOf(a.starts_at)))];
+  const row = (a, past) => { const c = cById(a.client_id), w = waLink(c.phone, reminderText(c, a));
+    return `<li><time>${fTime.format(new Date(a.starts_at))}</time><div><b>${esc(c.full_name)}</b> <span class="muted small">${MODE[a.mode]} · ${a.duration_min} dk · ${money(a.fee)}</span></div><div class="acts">
+      ${past ? `<button data-act="setStatus" data-s="completed" data-id="${esc(a.id)}">Tamamlandı</button><button data-act="setStatus" data-s="no_show" data-id="${esc(a.id)}">Gelmedi</button>`
+        : `${w ? `<a class="btn" href="${esc(w)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<button data-act="cancelT" data-id="${esc(a.id)}">İptal et</button>`}
+      <button data-act="writeNote" data-c="${esc(a.client_id)}" data-a="${esc(a.id)}">Not yaz</button><button data-act="openClient" data-c="${esc(a.client_id)}">Dosya</button></div></li>`; };
+  const opts = S.clients.map(c => `<option value="${esc(c.id)}">${esc(c.full_name || c.email)}</option>`).join('');
+  return `<div class="spread"><h2 style="margin:0">Ajanda</h2><button data-act="toggleNew">${S.showNew ? 'Formu kapat' : 'Randevu ekle'}</button></div>
+    ${S.showNew ? `<form class="panel fade" data-form="newAppt" style="margin-bottom:20px"><p class="small muted">Danışanla konuştuğunuz bir randevuyu doğrudan onaylı olarak ekleyin. Danışana onay bildirimi ve e-postası gider.</p><div class="grid2f">
+      <label>Danışan<select name="client_id" id="na-client" required>${opts}</select></label><label>Şekil<select name="mode" id="na-mode"><option value="yuz_yuze">Yüz yüze</option><option value="online">Online</option></select></label>
+      <label>Tarih<input type="date" name="d" id="na-date" required value="${addDays(today, 1)}"></label><label>Saat<input type="time" name="t" id="na-time" required value="14:00" step="300"></label></div><button class="primary">Onaylı randevu ekle</button></form>` : ''}
+    ${open.length ? `<div class="panel" style="margin-bottom:18px"><h3>Durumu işaretlenmemiş geçmiş seanslar</h3><ol class="agenda">${open.map(a => `<li><time>${fTime.format(new Date(a.starts_at))}</time><div><b>${esc(cById(a.client_id).full_name)}</b> <span class="muted small">${esc(fDay.format(new Date(a.starts_at)))}</span></div><div class="acts"><button data-act="setStatus" data-s="completed" data-id="${esc(a.id)}">Tamamlandı</button><button data-act="setStatus" data-s="no_show" data-id="${esc(a.id)}">Gelmedi</button><button data-act="writeNote" data-c="${esc(a.client_id)}" data-a="${esc(a.id)}">Not yaz</button></div></li>`).join('')}</ol></div>` : ''}
+    ${days.length ? days.map(d => `<p class="dayh">${d === today ? 'Bugün · ' : d === addDays(today, 1) ? 'Yarın · ' : ''}${esc(fDay.format(dateOfYmd(d)))}</p><ol class="agenda">${up.filter(a => ymdOf(a.starts_at) === d).map(a => row(a)).join('')}</ol>`).join('') : '<div class="empty">Önümüzdeki 3 haftada onaylı seans yok.</div>'}`;
+}
+function tClients() {
+  if (S.clientId) return clientFile(S.clientId);
+  const q = (S.q || '').toLocaleLowerCase('tr');
+  const rows = S.clients.filter(c => !q || (c.full_name || c.email || '').toLocaleLowerCase('tr').includes(q)).map(c => { const st = stats(c.id);
+    return `<tr class="click" data-act="openClient" data-c="${esc(c.id)}" tabindex="0"><td data-l="Danışan"><b>${esc(c.full_name || '(adı girilmedi)')}</b><br><span class="small muted">${esc(c.phone || c.email || '')}</span></td><td data-l="Son seans" class="nowrap">${st.last ? esc(fShort.format(new Date(st.last.starts_at))) : '—'}</td><td data-l="Sonraki" class="nowrap">${st.next ? esc(fShort.format(new Date(st.next.starts_at))) + (st.next.status === 'pending' ? ' (talep)' : '') : '—'}</td><td data-l="Seans" class="num">${st.done.length}</td><td data-l="Ücret" class="num">${money(c.fee ?? S.settings.default_fee)}</td><td data-l="Bekleyen ödeme" class="num">${st.due ? money(st.due) : '—'}</td></tr>`; }).join('');
+  return `<div class="spread"><h2 style="margin:0">Danışanlar <span class="muted" style="font-size:18px">${S.clients.length}</span></h2><input id="q" type="search" placeholder="İsimle ara" value="${esc(S.q || '')}" style="max-width:260px" aria-label="Danışan ara"></div>
+    ${S.clients.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Danışan</th><th>Son seans</th><th>Sonraki</th><th class="num">Seans</th><th class="num">Ücret</th><th class="num">Bekleyen ödeme</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">Henüz danışan yok. Danışanlarınız portal adresinden e-postalarıyla giriş yaptığında burada listelenir.</div>'}`;
+}
+function clientFile(cid) {
+  const c = cById(cid), st = stats(cid), notes = S.notes.filter(n => n.client_id === cid), wa = waLink(c.phone, `Merhaba ${(c.full_name || '').split(' ')[0]}, `);
+  const hist = st.mine.slice().sort((a, b) => b.starts_at.localeCompare(a.starts_at));
+  return `<button class="link" data-act="closeClient">← Tüm danışanlar</button>
+  <div class="spread" style="margin-top:8px"><div><h2 style="margin:0">${esc(c.full_name || c.email)}</h2><p class="muted small">${esc(c.phone || '')}${c.phone && c.email ? ' · ' : ''}${esc(c.email || '')}${c.kvkk_consent_at ? ` · KVKK onayı ${esc(fShort.format(new Date(c.kvkk_consent_at)))}` : ''}</p></div>
+    <div class="row">${wa ? `<a class="btn" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<button class="primary" data-act="writeNote" data-c="${esc(cid)}">Yeni seans notu</button></div></div>
+  <div class="kpis"><div class="kpi"><b>${st.done.length}</b><span>Tamamlanan seans</span></div><div class="kpi"><b>${st.last ? esc(fShort.format(new Date(st.last.starts_at))) : '—'}</b><span>Son seans</span></div><div class="kpi"><b>${st.next ? esc(fShort.format(new Date(st.next.starts_at))) : '—'}</b><span>Sonraki seans</span></div><div class="kpi"><b>${money(st.due)}</b><span>Bekleyen ödeme</span></div></div>
+  ${S.draft && S.draft.client_id === cid ? noteEditor() : ''}
+  <div class="cols"><section><h3 style="margin-bottom:10px">Seans notları</h3>${notes.length ? notes.map(n => noteCard(n, true)).join('') : '<div class="empty">Bu danışana henüz not eklenmedi.</div>'}</section>
+  <aside><form class="panel" data-form="fee" data-c="${esc(cid)}" style="margin-bottom:18px"><label>Seans ücreti (${esc(S.settings.currency || 'TRY')})<input type="number" min="0" step="50" name="fee" id="fee" value="${esc(c.fee ?? '')}" placeholder="Varsayılan: ${esc(S.settings.default_fee)}"></label><button>Ücreti kaydet</button></form>
+  <div class="panel"><h3>Randevu geçmişi</h3>${hist.length ? `<ul class="list">${hist.map(a => `<li><div class="spread" style="margin:0"><span class="nowrap"><b>${esc(fShort.format(new Date(a.starts_at)))}</b> ${fTime.format(new Date(a.starts_at))}</span>${chip(a.status)}</div>
+    ${['completed', 'no_show'].includes(a.status) ? `<label class="check small" style="margin:6px 0 0"><input type="checkbox" data-act="paid" data-id="${esc(a.id)}" ${a.paid ? 'checked' : ''}> Ödendi · ${money(a.fee)}</label>` : `<span class="small muted">${MODE[a.mode]} · ${money(a.fee)}</span>`}</li>`).join('')}</ul>` : '<p class="muted">Kayıt yok.</p>'}</div></aside></div>`;
+}
+function noteEditor() {
+  const d = S.draft, c = cById(d.client_id), aps = stats(d.client_id).mine.filter(a => ['completed', 'confirmed', 'no_show'].includes(a.status)).sort((a, b) => b.starts_at.localeCompare(a.starts_at)).slice(0, 12);
+  return `<form class="panel fade" data-form="note" style="margin-bottom:24px"><h3>${d.id ? 'Notu düzenle' : 'Yeni seans notu'} · ${esc(c.full_name)}</h3><p class="small muted">Bu notu yalnızca ${esc(c.full_name)} görür. Kaydettiğinizde danışana bildirim gider; e-postada notun içeriği yer almaz.</p>
+    <div class="grid2f"><label>Seans tarihi<input type="date" name="session_date" id="n-date" value="${esc(d.session_date)}" required></label>
+    <label>İlgili seans<select name="appointment_id" id="n-appt"><option value="">Seçilmedi</option>${aps.map(a => `<option value="${esc(a.id)}" ${a.id === d.appointment_id ? 'selected' : ''}>${esc(when(a.starts_at))}</option>`).join('')}</select></label></div>
+    <label>Başlık<input name="title" id="n-title" value="${esc(d.title)}" placeholder="Örn. Kaygıyla baş etme"></label>
+    <label>Seansın çıkarımları (her satır bir madde)<textarea name="points" id="n-points" rows="6" placeholder="Bu seansta konuştuklarımız…">${esc(d.points)}</textarea></label>
+    <label>Ödev / öneri (isteğe bağlı)<textarea name="homework" id="n-hw" rows="3">${esc(d.homework)}</textarea></label>
+    <p class="small muted" style="margin:0">Danışanın göreceği hâli:</p><div class="preview" id="n-prev">${previewHTML()}</div>
+    <div class="row" style="margin-top:14px"><button class="primary">${d.id ? 'Değişiklikleri kaydet' : 'Kaydet ve danışanın portalına ekle'}</button><button type="button" class="link" data-act="cancelDraft">Vazgeç</button></div></form>`;
+}
+const draftPoints = () => (S.draft.points || '').split('\n').map(s => s.replace(/^[-•*\d.)\s]+/, '').trim()).filter(Boolean);
+function previewHTML() { const d = S.draft; return noteBody({ title: d.title, session_date: d.session_date, points: draftPoints(), homework: d.homework }); }
+function noteBody(n) {
+  return `<p class="small muted" style="margin:0">${n.session_date ? esc(fShort.format(dateOfYmd(n.session_date))) + ' seansı' : ''}</p><h3>${esc(n.title || 'Seans çıkarımları')}</h3>
+  ${(n.points || []).length ? `<ul>${n.points.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : '<p class="muted small">Madde eklenmedi.</p>'}
+  ${n.homework ? `<div class="hw"><b>Bu haftaya öneri:</b> ${esc(n.homework)}</div>` : ''}`;
+}
+function noteCard(n, t) {
+  return `<article class="note fade">${t ? '' : (!n.read_at ? '<span class="chip c-new" style="float:right">Yeni</span>' : '')}${noteBody(n)}
+  ${t ? `<div class="spread" style="margin:12px 0 0"><span class="small ${n.read_at ? '' : 'muted'}">${n.read_at ? 'Danışan okudu · ' + esc(fStamp.format(new Date(n.read_at))) : 'Henüz okunmadı'}</span><span class="row"><button data-act="editNote" data-id="${esc(n.id)}">Düzenle</button><button data-act="delNote" data-id="${esc(n.id)}">Sil</button></span></div>` : ''}</article>`;
+}
+function tSettings() {
+  const s = S.settings, wh = s.weekly_hours || {};
+  return `<h2>Ayarlar</h2><form data-form="settings" class="cols"><section>
+    <div class="panel" style="margin-bottom:18px"><h3>Çalışma saatleri</h3><p class="small muted">Her gün için seans başlangıç saatlerini virgülle yazın. Boş bırakılan gün kapalıdır. Danışanlar yalnızca bu saatleri görür.</p>
+    ${[1, 2, 3, 4, 5, 6, 0].map(d => `<label>${WD[d]}<input name="wh${d}" id="wh${d}" value="${esc((wh[d] || []).join(', '))}" placeholder="Kapalı"></label>`).join('')}
+    <label>Kapalı günler (izin, tatil). Virgülle, YYYY-AA-GG biçiminde<input name="blocked" id="blocked" value="${esc((s.blocked_dates || []).join(', '))}" placeholder="2026-12-31, 2027-01-01"></label></div>
+    <div class="panel"><h3>Randevu kuralları</h3><div class="grid2f">
+      <label>Seans süresi (dk)<input type="number" name="session_minutes" id="s-min" min="15" value="${esc(s.session_minutes)}"></label>
+      <label>Varsayılan ücret<input type="number" name="default_fee" id="s-fee" min="0" step="50" value="${esc(s.default_fee)}"></label>
+      <label>Kaç gün ilerisi açık<input type="number" name="horizon_days" id="s-hor" min="1" max="120" value="${esc(s.horizon_days)}"></label>
+      <label>En az kaç saat önceden talep<input type="number" name="min_notice_hours" id="s-not" min="0" value="${esc(s.min_notice_hours)}"></label>
+      <label>Ücretsiz iptal için son saat<input type="number" name="cancel_hours" id="s-can" min="0" value="${esc(s.cancel_hours)}"></label>
+      <label>Hatırlatma (seanstan kaç saat önce)<input name="reminder_hours" id="s-rem" value="${esc((s.reminder_hours || []).join(', '))}" placeholder="24, 1"></label></div>
+      <label>İptal politikası<textarea name="cancel_policy" id="s-pol" rows="3">${esc(s.cancel_policy)}</textarea></label>
+      <label>Danışan onay metni (KVKK açık rıza)<textarea name="kvkk_text" id="s-kvkk" rows="4">${esc(s.kvkk_text)}</textarea></label></div></section>
+    <aside><div class="panel"><h3>Muayenehane bilgileri</h3>
+      <label>Muayenehane adı<input name="practice_name" id="s-pn" value="${esc(s.practice_name)}"></label>
+      <label>Ad soyad<input name="therapist_name" id="s-tn" value="${esc(s.therapist_name)}"></label>
+      <label>Unvan<input name="title" id="s-ti" value="${esc(s.title)}"></label>
+      <label>Telefon<input name="phone" id="s-ph" value="${esc(s.phone)}"></label>
+      <label>E-posta (talep bildirimleri buraya gelir)<input type="email" name="email" id="s-em" value="${esc(s.email)}"></label>
+      <label>Adres<textarea name="address" id="s-ad" rows="2">${esc(s.address)}</textarea></label>
+      <label>Online görüşme bağlantısı<input name="online_link" id="s-ol" value="${esc(s.online_link)}" placeholder="https://"></label>
+      <button class="primary">Ayarları kaydet</button></div></aside></form>`;
+}
+
+/* --- Danışan --- */
+function viewOnboard() {
+  const s = S.settings;
+  return `<form class="center panel fade" data-form="onboard"><h2>Hoş geldiniz</h2><p class="muted">Randevu talep edebilmeniz için birkaç bilgi gerekiyor. Bu bilgileri yalnızca ${esc(s.therapist_name || 'psikoloğunuz')} görür.</p>
+    <label>Ad soyad<input name="full_name" id="o-name" required value="${esc(S.me.full_name || '')}" autocomplete="name"></label>
+    <label>Telefon<input name="phone" id="o-phone" type="tel" required value="${esc(S.me.phone || '')}" autocomplete="tel" placeholder="05xx xxx xx xx"></label>
+    <label class="check"><input type="checkbox" name="kvkk" id="o-kvkk" required> <span class="small">${esc(s.kvkk_text)}</span></label>
+    <button class="primary">Devam et</button></form>`;
+}
+function nextCard() {
+  const now = Date.now(), up = S.appts.filter(a => ['confirmed', 'pending'].includes(a.status) && !ended(a)).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const n = up.find(a => a.status === 'confirmed') || up[0];
+  if (!n) return '';
+  const soon = n.status === 'confirmed' && +new Date(n.starts_at) - now < 26 * HOUR;
+  return `<div class="next fade"><div><p class="small" style="opacity:.85;margin:0">${soon ? 'Hatırlatma: seansınız yaklaşıyor' : n.status === 'confirmed' ? 'Sonraki seansınız' : 'Onay bekleyen talebiniz'}</p><p class="big" style="margin:4px 0">${esc(when(n.starts_at))}</p><p class="small" style="margin:0;opacity:.85">${MODE[n.mode]} · ${n.duration_min} dk · ${esc(rel(n.starts_at))}${n.mode === 'online' && n.status === 'confirmed' && S.settings.online_link && /^https:\/\//.test(S.settings.online_link) ? ` · <a href="${esc(S.settings.online_link)}" target="_blank" rel="noopener">Görüşme bağlantısı</a>` : n.mode === 'yuz_yuze' && S.settings.address ? ' · ' + esc(S.settings.address) : ''}</p></div><div>${chip(n.status)}</div></div>`;
+}
+function cBook() {
+  const days = freeSlots(), s = S.settings, p = S.pick;
+  if (!p.day || !days.some(d => d.d === p.day && d.slots.length)) p.day = (days.find(d => d.slots.length) || {}).d || null;
+  const cur = days.find(d => d.d === p.day);
+  if (p.slot && !(cur?.slots || []).includes(p.slot)) p.slot = null;
+  const fee = S.me.fee ?? s.default_fee;
+  return `<div class="cols"><section><h2>Randevu al</h2><p class="muted">Boş saatlerden birini seçip talep gönderin. ${esc(s.therapist_name || 'Psikoloğunuz')} onayladığında size bildirim ve e-posta gelir.</p>
+    ${days.some(d => d.slots.length) ? `<div class="days" role="group" aria-label="Gün seçin">${days.map(d => { const dt = dateOfYmd(d.d); return `<button class="day" data-act="pickDay" data-d="${d.d}" aria-pressed="${d.d === p.day}" ${d.slots.length ? '' : 'disabled'}><span>${esc(fWd.format(dt))}</span><b>${fNum.format(dt)}</b><span>${esc(fMon.format(dt))}</span><small>${d.slots.length ? d.slots.length + ' boş' : 'Dolu'}</small></button>`; }).join('')}</div>
+    <h3 style="margin-top:16px">${cur ? esc(fDay.format(dateOfYmd(cur.d))) : ''}</h3>
+    <div class="slots" role="group" aria-label="Saat seçin">${(cur?.slots || []).map(t => `<button data-act="pickSlot" data-t="${esc(t)}" aria-pressed="${t === p.slot}">${fTime.format(new Date(t))}</button>`).join('')}</div>`
+    : '<div class="empty">Önümüzdeki günlerde boş saat görünmüyor. Lütfen daha sonra tekrar bakın ya da psikoloğunuzla iletişime geçin.</div>'}</section>
+    <aside><form class="panel" data-form="request"><h3>Talebiniz</h3>
+      <p class="when" style="font-size:22px">${p.slot ? esc(when(p.slot)) : '<span class="muted" style="font-size:16px;font-weight:400">Henüz saat seçmediniz</span>'}</p>
+      <p class="small muted">${s.session_minutes} dakika · ${money(fee)}</p>
+      <label>Görüşme şekli<select name="mode" id="r-mode">${Object.entries(MODE).map(([k, v]) => `<option value="${k}" ${p.mode === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label>Not (isteğe bağlı)<textarea name="client_note" id="r-note" rows="3" placeholder="Psikoloğunuza iletmek istediğiniz kısa bir not">${esc(p.note)}</textarea></label>
+      <button class="primary" ${p.slot ? '' : 'disabled'} style="width:100%">Randevu talebi gönder</button>
+      ${s.cancel_policy ? `<p class="small muted" style="margin-top:12px">${esc(s.cancel_policy)}</p>` : ''}</form></aside></div>`;
+}
+function cMine() {
+  const up = S.appts.filter(a => ['pending', 'confirmed'].includes(a.status) && !ended(a)).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const past = S.appts.filter(a => !up.includes(a)).sort((a, b) => b.starts_at.localeCompare(a.starts_at));
+  const ch = S.settings.cancel_hours || 0;
+  return `<h2>Yaklaşan randevular</h2>${up.length ? up.map(a => { const late = a.status === 'confirmed' && +new Date(a.starts_at) - Date.now() < ch * HOUR;
+    return `<article class="req">${dateBlock(a.starts_at)}<div><p class="when">${esc(when(a.starts_at))} ${chip(a.status)}</p><p class="muted small">${MODE[a.mode]} · ${a.duration_min} dk · ${money(a.fee)}</p>
+      ${late ? `<p class="small muted">Seansa ${ch} saatten az kaldığı için iptal için lütfen psikoloğunuzla iletişime geçin${S.settings.phone ? ': ' + esc(S.settings.phone) : '.'}</p>` : `<button data-act="cancelC" data-id="${esc(a.id)}">${a.status === 'pending' ? 'Talebi geri çek' : 'Randevuyu iptal et'}</button>`}</div></article>`; }).join('')
+    : `<div class="empty">Yaklaşan randevunuz yok. <button class="link" data-act="tab" data-t="randevu">Randevu alın</button></div>`}
+    <h2 style="margin-top:32px">Geçmiş</h2>${past.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Tarih</th><th>Şekil</th><th>Durum</th><th class="num">Ücret</th></tr></thead><tbody>${past.map(a => `<tr><td data-l="Tarih" class="nowrap">${esc(fShort.format(new Date(a.starts_at)))} ${fTime.format(new Date(a.starts_at))}</td><td data-l="Şekil">${MODE[a.mode]}</td><td data-l="Durum">${chip(a.status)}${a.therapist_message ? `<br><span class="small muted">${esc(a.therapist_message)}</span>` : ''}</td><td data-l="Ücret" class="num">${['completed', 'no_show'].includes(a.status) ? money(a.fee) + (a.paid ? ' · ödendi' : '') : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Henüz geçmiş randevu yok.</p>'}`;
+}
+function cNotes() {
+  return `<h2>Seans notlarım</h2><p class="muted">${esc(S.settings.therapist_name || 'Psikoloğunuz')} her seanstan sonra çıkarımları buraya ekler. Bu notları yalnızca siz görebilirsiniz.</p>
+    ${S.notes.length ? S.notes.map(n => noteCard(n, false)).join('') : '<div class="empty">Henüz seans notu eklenmedi.</div>'}`;
+}
+let marking = false;
+async function markNotesRead() { if (marking) return; const u = S.notes.filter(n => !n.read_at); if (!u.length) return; marking = true;
+  try { for (const n of u) await S.api.markNoteRead(n.id); setTimeout(() => { S.notes.forEach(n => n.read_at = n.read_at || new Date().toISOString()); renderShell(); }, 2500); } catch (e) { console.error(e); } finally { marking = false; } }
+function cNotifs() {
+  return `<h2>Bildirimler</h2>${S.notifs.length ? `<ul class="list">${S.notifs.map(n => `<li class="${n.read_at ? '' : 'unread'}"><div class="spread" style="margin:0"><span>${esc(n.title)}</span><span class="small muted nowrap">${esc(fStamp.format(new Date(n.created_at)))}</span></div>${n.body ? `<p class="small muted" style="font-weight:400;margin:2px 0 0">${esc(n.body)}</p>` : ''}</li>`).join('')}</ul>` : '<div class="empty">Bildiriminiz yok.</div>'}`;
+}
+function cAccount() {
+  const s = S.settings, st = stats(S.me.id);
+  return `<h2>Hesabım</h2><div class="kpis"><div class="kpi"><b>${st.done.length}</b><span>Tamamlanan seans</span></div><div class="kpi"><b>${st.last ? esc(fShort.format(new Date(st.last.starts_at))) : '—'}</b><span>Son seans</span></div><div class="kpi"><b>${money(S.me.fee ?? s.default_fee)}</b><span>Seans ücreti</span></div>${st.due ? `<div class="kpi"><b>${money(st.due)}</b><span>Ödenecek tutar</span></div>` : ''}</div>
+  <div class="cols"><form class="panel" data-form="profile"><h3>Bilgilerim</h3><label>Ad soyad<input name="full_name" id="p-name" value="${esc(S.me.full_name)}" required></label><label>Telefon<input name="phone" id="p-phone" type="tel" value="${esc(S.me.phone)}"></label><p class="small muted">E-posta: ${esc(S.me.email || '')}</p><button>Kaydet</button></form>
+  <div class="panel"><h3>${esc([s.title, s.therapist_name].filter(Boolean).join(' ') || 'Psikoloğunuz')}</h3><ul class="list">
+    ${s.phone ? `<li>Telefon: ${esc(s.phone)}</li>` : ''}${s.email ? `<li>E-posta: ${esc(s.email)}</li>` : ''}${s.address ? `<li>Adres: ${esc(s.address)}</li>` : ''}
+    <li>Seans süresi: ${esc(s.session_minutes)} dakika</li>${s.cancel_policy ? `<li class="small muted">${esc(s.cancel_policy)}</li>` : ''}
+    ${S.me.kvkk_consent_at ? `<li class="small muted">Açık rıza onayınız: ${esc(fShort.format(new Date(S.me.kvkk_consent_at)))}</li>` : ''}</ul></div></div>`;
+}
+
+/* ---------------- Olaylar ---------------- */
+async function run(fn, msg) { try { await fn(); if (msg) toast(msg); await load(); } catch (e) { console.error(e); toast(errMsg(e)); } }
+const A = {
+  tab: d => { S.tab = d.t; S.clientId = null; S.draft = null; render(); scrollTo(0, 0); },
+  demoRole: async d => { S.api.setRole(d.r); S.tab = null; S.clientId = null; S.draft = null; await load(); },
+  logout: async () => { await S.api.signOut(); S.loginSent = ''; await load(); },
+  loginReset: () => { S.loginSent = ''; renderLogin(); },
+  approve: d => run(() => S.api.updateAppointment(d.id, { status: 'confirmed' }), 'Randevu onaylandı. Danışana bildirim ve e-posta gidecek.'),
+  declineOpen: d => { S.declineId = d.id; render(); $('#decline-msg')?.focus(); },
+  declineClose: () => { S.declineId = null; render(); },
+  setStatus: d => run(() => S.api.updateAppointment(d.id, { status: d.s }), d.s === 'completed' ? 'Seans tamamlandı olarak işaretlendi.' : 'Seans “gelmedi” olarak işaretlendi.'),
+  cancelT: async d => { if (await ask('Randevu iptal edilsin mi?', 'Danışana iptal bildirimi ve e-postası gider. Saat yeniden boşa çıkar.', 'İptal et')) run(() => S.api.updateAppointment(d.id, { status: 'cancelled' }), 'Randevu iptal edildi.'); },
+  cancelC: async d => { if (await ask('Randevu iptal edilsin mi?', 'Psikoloğunuza bilgi verilir. Bu işlem geri alınamaz; yeni bir saat talep edebilirsiniz.', 'İptal et')) run(() => S.api.updateAppointment(d.id, { status: 'cancelled' }), 'Randevunuz iptal edildi.'); },
+  toggleNew: () => { S.showNew = !S.showNew; render(); },
+  openClient: d => { S.tab = 'danisanlar'; S.clientId = d.c; if (S.draft && S.draft.client_id !== d.c) S.draft = null; render(); scrollTo(0, 0); },
+  closeClient: () => { S.clientId = null; S.draft = null; render(); },
+  writeNote: d => { const ap = S.appts.find(a => a.id === d.a); const last = stats(d.c).done[0];
+    S.draft = { client_id: d.c, appointment_id: ap?.id || last?.id || '', session_date: ymdOf((ap || last)?.starts_at || Date.now()), title: '', points: '', homework: '' };
+    S.tab = 'danisanlar'; S.clientId = d.c; render(); $('#n-title')?.focus(); },
+  editNote: d => { const n = S.notes.find(x => x.id === d.id); S.draft = { ...n, points: (n.points || []).join('\n'), appointment_id: n.appointment_id || '' }; render(); $('#n-title')?.focus(); },
+  cancelDraft: () => { S.draft = null; render(); },
+  delNote: async d => { if (await ask('Not silinsin mi?', 'Not danışanın portalından da kaldırılır. Bu işlem geri alınamaz.', 'Sil')) run(() => S.api.deleteNote(d.id), 'Not silindi.'); },
+  pickDay: d => { S.pick.day = d.d; S.pick.slot = null; render(); },
+  pickSlot: d => { S.pick.slot = d.t; render(); },
+  paid: (d, el) => run(() => S.api.updateAppointment(d.id, { paid: el.checked }), el.checked ? 'Ödeme kaydedildi.' : 'Ödeme kaldırıldı.')
+};
+const csv = v => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
+const FORMS = {
+  login: async f => { const email = f.email.value.trim(); try { await S.api.signIn(email); S.loginSent = email; renderLogin(); } catch (e) { toast(errMsg(e)); } },
+  otp: async f => { try { await S.api.verify(S.loginSent, f.code.value.trim()); await load(); } catch (e) { toast('Kod doğrulanamadı: ' + errMsg(e)); } },
+  decline: f => { const msg = f.msg.value.trim(); S.declineId = null; run(() => S.api.updateAppointment(f.dataset.id, { status: 'declined', therapist_message: msg || null }), 'Talep reddedildi. Danışana bildirim gidecek.'); },
+  newAppt: f => { const t = slotISO(f.d.value, f.t.value); S.showNew = false; run(() => S.api.createAppointment({ client_id: f.client_id.value, starts_at: t, mode: f.mode.value, status: 'confirmed' }), 'Randevu eklendi. Danışana onay bildirimi gidecek.'); },
+  fee: f => run(() => S.api.setClientFee(f.dataset.c, f.fee.value === '' ? null : +f.fee.value), 'Ücret kaydedildi.'),
+  note: f => { const d = S.draft, pts = draftPoints(); if (!pts.length) { toast('En az bir madde yazın.'); return; }
+    const body = { id: d.id, client_id: d.client_id, session_date: d.session_date, appointment_id: d.appointment_id || null, title: (d.title || '').trim() || 'Seans çıkarımları', points: pts, homework: (d.homework || '').trim() || null };
+    run(async () => { await S.api.saveNote(body); S.draft = null; }, d.id ? 'Not güncellendi.' : 'Not danışanın portalına eklendi.'); },
+  settings: f => { const wh = {}; for (const d of [0, 1, 2, 3, 4, 5, 6]) { const v = csv(f.elements['wh' + d].value); const bad = v.find(x => !/^([01]\d|2[0-3]):[0-5]\d$/.test(x)); if (bad) { toast(`${WD[d]} için “${bad}” geçerli bir saat değil (örn. 09:00).`); return; } if (v.length) wh[d] = [...new Set(v)].sort(); }
+    const bl = csv(f.elements.blocked.value); if (bl.some(x => !/^\d{4}-\d{2}-\d{2}$/.test(x))) { toast('Kapalı günleri YYYY-AA-GG biçiminde yazın.'); return; }
+    const el = k => f.elements[k].value, num = k => el(k) === '' ? null : +el(k);
+    const s = { ...S.settings, weekly_hours: wh, blocked_dates: bl, session_minutes: num('session_minutes') || 50, default_fee: num('default_fee') || 0, horizon_days: num('horizon_days') || 21, min_notice_hours: num('min_notice_hours') || 0, cancel_hours: num('cancel_hours') || 0,
+      reminder_hours: csv(el('reminder_hours')).map(Number).filter(n => n > 0), cancel_policy: el('cancel_policy').trim(), kvkk_text: el('kvkk_text').trim() };
+    for (const k of ['practice_name', 'therapist_name', 'title', 'phone', 'email', 'address', 'online_link']) s[k] = el(k).trim();
+    run(() => S.api.saveSettings(s), 'Ayarlar kaydedildi.'); },
+  onboard: f => run(() => S.api.saveProfile({ full_name: f.full_name.value.trim(), phone: f.phone.value.trim(), kvkk_consent_at: new Date().toISOString() }), 'Hoş geldiniz!'),
+  profile: f => run(() => S.api.saveProfile({ full_name: f.full_name.value.trim(), phone: f.phone.value.trim() }), 'Bilgileriniz kaydedildi.'),
+  request: f => { const p = S.pick; if (!p.slot) return;
+    run(async () => { await S.api.requestAppointment({ starts_at: p.slot, mode: f.mode.value, client_note: f.client_note.value.trim() || null }); S.pick = { day: p.day, slot: null, mode: 'yuz_yuze', note: '' }; S.tab = 'randevularim'; }, 'Talebiniz iletildi. Onaylandığında bildirim ve e-posta alacaksınız.'); }
+};
+document.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  if (b.type === 'checkbox') { A[b.dataset.act]?.(b.dataset, b); return; } A[b.dataset.act]?.(b.dataset, b, e); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('tr[data-act]')) A[e.target.dataset.act]?.(e.target.dataset, e.target); });
+document.addEventListener('submit', e => { e.preventDefault(); const f = e.target; FORMS[f.dataset.form]?.(f); });
+document.addEventListener('input', e => { const t = e.target;
+  if (t.id === 'q') { S.q = t.value; const pos = t.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); }
+  if (t.id === 'r-note') S.pick.note = t.value; if (t.id === 'r-mode') S.pick.mode = t.value;
+  if (S.draft && t.closest('form[data-form=note]')) { const k = { 'n-date': 'session_date', 'n-appt': 'appointment_id', 'n-title': 'title', 'n-points': 'points', 'n-hw': 'homework' }[t.id]; if (k) { S.draft[k] = t.value; $('#n-prev').innerHTML = previewHTML(); } } });
+document.addEventListener('change', e => { const t = e.target; if (t.id === 'r-mode') S.pick.mode = t.value; if (t.id === 'n-appt' && S.draft) { S.draft.appointment_id = t.value; const a = S.appts.find(x => x.id === t.value); if (a) { S.draft.session_date = ymdOf(a.starts_at); $('#n-date').value = S.draft.session_date; $('#n-prev').innerHTML = previewHTML(); } } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.loaded) load(true); });
+setInterval(() => { if (!document.hidden && S.loaded && !S.api.demo) load(true); }, 60000);
+
+(async () => {
+  try { S.api = CFG ? await supaApi() : demoApi(); await load(); }
+  catch (e) { console.error(e); $('#app').innerHTML = `<div class="empty">Uygulama başlatılamadı: ${esc(errMsg(e))}</div>`; }
+})();
+}
+</script>
+</body>
+</html>
