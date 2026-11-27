@@ -7,8 +7,8 @@ self.addEventListener('push', (e) => {
   try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data ? e.data.text() : '' }; }
   e.waitUntil(self.registration.showNotification(d.title || 'Danışan Portalı', {
     body: d.body || '',
-    icon: 'icon-logo-192.png',
-    badge: 'icon-logo-192.png',
+    icon: 'icon-bg-192.png',
+    badge: 'icon-bg-192.png',
     lang: 'tr',
     data: { url: d.url || './' }
   }));
