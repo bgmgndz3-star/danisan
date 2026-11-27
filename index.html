@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2b2140">
+<meta name="theme-color" content="#111111">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,10 +19,10 @@
 /* VOICE everyday-professional, calm and warm: a private practice's own portal for its clients
    IDEA the practice's appointment book: day pages with hanging times, and one personal file per client
    PICTURE the working app itself: request cards, the agenda with large hanging times, the slot picker
-   COLOUR white ground, deep plum band, lavender panels, coral for the one action that matters
+   COLOUR white ground, black band, warm ivory panels, gold for the name and the action that matters
    TYPE Outfit for headings and figures + Inter for text
    LAYOUT plum band with name and tabs; content up to 1120px, two columns above 900px, one column on phones */
-:root{color-scheme:light dark;--bg:light-dark(#ffffff,#14111b);--ink:light-dark(#1f1a2b,#efeaf7);--muted:light-dark(#625b72,#a9a1b9);--band:#2b2140;--bandink:#f4effc;--soft:light-dark(#f3eff9,#1e1828);--line:light-dark(#e3dcee,#352c44);--acc:light-dark(#d9472f,#ff7a63);--accink:light-dark(#ffffff,#1b1422);--ok:light-dark(#2c7a57,#6fd3a5);--warn:light-dark(#9a6200,#f2b84b);--bad:light-dark(#b3261e,#ff8a80)}
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e0e0d);--ink:light-dark(#141414,#f3ecdc);--muted:light-dark(#66604f,#aca38b);--band:light-dark(#111111,#221f17);--bandink:#f4ead2;--gold:#d4af5a;--soft:light-dark(#f8f3e6,#1a1813);--line:light-dark(#e9dfc4,#3a3424);--acc:light-dark(#c9a24a,#d6b25e);--acctext:light-dark(#87661c,#e3c47a);--accink:#111111;--ok:light-dark(#2c7a57,#6fd3a5);--warn:light-dark(#a2561a,#f0a868);--bad:light-dark(#b3261e,#ff8a80)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 html,body{margin:0}
@@ -38,13 +38,13 @@ a{color:inherit}
 .top{background:var(--band);color:var(--bandink);padding-top:env(safe-area-inset-top,0px)}
 .top .wrap{padding-block:22px 0}
 .brand{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end}
-.brand h1{font-size:clamp(26px,4vw,38px);font-weight:600}
+.brand h1{font-size:clamp(26px,4vw,38px);font-weight:600;color:var(--gold)}
 .brand p{margin:4px 0 0;opacity:.8}
 .who{font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .tabs{display:flex;gap:4px;margin-top:20px;overflow-x:auto;scrollbar-width:none}
 .tabs button{flex:none;background:none;border:0;color:var(--bandink);opacity:.75;font:500 15px Inter,sans-serif;padding:12px 14px;border-radius:12px 12px 0 0;cursor:pointer;min-height:44px}
 .tabs button[aria-current=true]{background:var(--bg);color:var(--ink);opacity:1}
-.tabs button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.tabs button:focus-visible{outline:2px solid var(--acctext);outline-offset:-2px}
 .badge{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:10px;background:var(--acc);color:var(--accink);font-size:12px;line-height:20px;text-align:center}
 main{padding-block:24px calc(64px + env(safe-area-inset-bottom,0px))}
 .seg{display:flex;gap:6px;margin:6px 0 16px}
@@ -61,10 +61,10 @@ main{padding-block:24px calc(64px + env(safe-area-inset-bottom,0px))}
 .muted{color:var(--muted)}
 .small{font-size:14px}
 .chip{display:inline-block;font:500 13px Inter,sans-serif;padding:2px 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap;vertical-align:2px}
-.c-pending{color:var(--warn)}.c-confirmed{color:var(--ok)}.c-completed{color:var(--muted)}.c-declined,.c-cancelled,.c-no_show{color:var(--bad)}.c-new{color:var(--acc)}
+.c-pending{color:var(--warn)}.c-confirmed{color:var(--ok)}.c-completed{color:var(--muted)}.c-declined,.c-cancelled,.c-no_show{color:var(--bad)}.c-new{color:var(--acctext)}
 button,.btn{font:500 15px Inter,sans-serif;min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 button:hover,.btn:hover{border-color:var(--muted)}
-button:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--acctext);outline-offset:2px}
 .primary{background:var(--acc);border-color:var(--acc);color:var(--accink)}
 .primary:hover{filter:brightness(1.07);border-color:var(--acc)}
 .link{border:0;background:none;padding:6px 4px;min-height:36px;text-decoration:underline;color:inherit}
@@ -96,7 +96,7 @@ blockquote{margin:8px 0 12px;padding:8px 12px;border-left:3px solid var(--line);
 .day{flex:none;scroll-snap-align:start;flex-direction:column;width:82px;padding:10px 4px;gap:0;line-height:1.2}
 .day b{font:600 26px Outfit,sans-serif}
 .day small{font-size:13px;color:var(--muted);margin-top:4px}
-.day[aria-pressed=true]{background:var(--band);color:var(--bandink);border-color:var(--band)}
+.day[aria-pressed=true]{background:var(--band);color:var(--bandink);border-color:var(--acc)}
 .day[aria-pressed=true] small{color:var(--bandink);opacity:.8}
 .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:14px 0 20px}
 .slots button{font:600 18px Outfit,sans-serif}
