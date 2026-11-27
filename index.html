@@ -2,7 +2,15 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2b2140">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Portal">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
 <title>Danışan Portalı</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,7 +35,7 @@ a{color:inherit}
 .wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,4vw);padding-right:max(16px,4vw)}
 .demo{background:light-dark(#fff3d6,#3a2c08);color:var(--ink);font-size:14px}
 .demo .wrap{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-block:8px}
-.top{background:var(--band);color:var(--bandink)}
+.top{background:var(--band);color:var(--bandink);padding-top:env(safe-area-inset-top,0px)}
 .top .wrap{padding-block:22px 0}
 .brand{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end}
 .brand h1{font-size:clamp(26px,4vw,38px);font-weight:600}
@@ -38,7 +46,10 @@ a{color:inherit}
 .tabs button[aria-current=true]{background:var(--bg);color:var(--ink);opacity:1}
 .tabs button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
 .badge{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:10px;background:var(--acc);color:var(--accink);font-size:12px;line-height:20px;text-align:center}
-main{padding-block:24px 64px}
+main{padding-block:24px calc(64px + env(safe-area-inset-bottom,0px))}
+.seg{display:flex;gap:6px;margin:6px 0 16px}
+.seg button{flex:1}
+.seg button[aria-pressed=true]{background:var(--band);color:var(--bandink);border-color:var(--band)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px}
 .kpi{background:var(--soft);border-radius:14px;padding:14px 16px}
 .kpi b{display:block;font:600 clamp(24px,3vw,30px) Outfit,sans-serif;white-space:nowrap}
@@ -169,7 +180,7 @@ const waLink = (phone, text) => { let d = String(phone || '').replace(/\D/g, '')
   return `https://wa.me/${d}?text=${encodeURIComponent(text)}`; };
 
 const S = { api: null, me: null, settings: null, clients: [], appts: [], notes: [], notifs: [], busy: [], tab: null, clientId: null,
-  pick: { day: null, slot: null, mode: 'yuz_yuze', note: '' }, draft: null, showNew: false, declineId: null, loginSent: '', loaded: false };
+  pick: { day: null, slot: null, mode: 'yuz_yuze', note: '' }, draft: null, showNew: false, declineId: null, loginSent: '', loginMode: 'link', loaded: false };
 
 function toast(m) { const d = document.createElement('div'); d.className = 'fade'; d.textContent = m; $('#toast').append(d); setTimeout(() => d.remove(), 4200); }
 function ask(title, text, ok = 'Evet', danger) {
@@ -179,7 +190,7 @@ function ask(title, text, ok = 'Evet', danger) {
     const done = v => { m.hidden = true; m.innerHTML = ''; res(v); };
     $('#m-no').onclick = () => done(false); $('#m-ok').onclick = () => done(true);
     m.onclick = e => { if (e.target === m) done(false); }; }); }
-const errMsg = e => { const m = e?.message || String(e); if (/appointments_slot_unique|duplicate key/.test(m)) return 'Bu saat az önce doldu. Lütfen başka bir saat seçin.'; return m; };
+const errMsg = e => { const m = e?.message || String(e); if (/appointments_slot_unique|duplicate key/.test(m)) return 'Bu saat az önce doldu. Lütfen başka bir saat seçin.'; if (/Invalid login credentials/i.test(m)) return 'E-posta ya da şifre hatalı. Şifreniz yoksa e-posta ile girin.'; if (/Email not confirmed/i.test(m)) return 'E-posta adresiniz henüz doğrulanmamış. E-posta ile girin.'; if (/should be different/i.test(m)) return 'Yeni şifre eskisiyle aynı olamaz.'; if (/expired|invalid/i.test(m)) return 'Kod geçersiz ya da süresi dolmuş. Yeni bir giriş e-postası isteyin.'; if (/rate limit|security purposes/i.test(m)) return 'Çok sık deneme yapıldı. Lütfen bir dakika sonra tekrar deneyin.'; return m; };
 
 /* ---------------- Demo veri katmanı ---------------- */
 function demoApi() {
@@ -221,7 +232,7 @@ function demoApi() {
   const clone = x => JSON.parse(JSON.stringify(x));
   return {
     demo: true, setRole(r) { role = r; },
-    async session() { return true; }, async signOut() {},
+    async session() { return true; }, async signOut() {}, async setPassword() {},
     async me() { return clone(role === 'therapist' ? T : meC()); },
     async saveProfile(p) { Object.assign(role === 'therapist' ? T : meC(), p); },
     async getSettings() { return clone(settings); }, async saveSettings(s) { Object.assign(settings, s); },
@@ -267,6 +278,8 @@ async function supaApi() {
     async session() { const s = (await sb.auth.getSession()).data.session; uid = s?.user?.id || null; return s; },
     async signIn(email) { ok(await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } })); },
     async verify(email, token) { ok(await sb.auth.verifyOtp({ email, token, type: 'email' })); },
+    async signInPassword(email, password) { ok(await sb.auth.signInWithPassword({ email, password })); },
+    async setPassword(password) { ok(await sb.auth.updateUser({ password })); },
     async signOut() { await sb.auth.signOut(); },
     async me() { if (!uid) return null; return ok(await sb.from('profiles').select('*').eq('id', uid).single()); },
     async saveProfile(p) { ok(await sb.from('profiles').update(p).eq('id', uid)); },
@@ -365,11 +378,18 @@ function render() {
 }
 function renderLogin() {
   S.settings = null; renderShell(); $('#pname').textContent = CFG?.practiceName || 'Danışan Portalı'; $('#psub').textContent = 'Randevu ve seans notlarınız için giriş yapın';
+  const pw = S.loginMode === 'password';
   $('#app').innerHTML = `<div class="center panel fade"><h2>Giriş yap</h2>
-    ${S.loginSent ? `<p>Giriş bağlantısı <b>${esc(S.loginSent)}</b> adresine gönderildi. E-postadaki bağlantıya tıklayın ya da varsa 6 haneli kodu girin.</p>
+    <div class="seg" role="group" aria-label="Giriş yöntemi"><button data-act="loginMode" data-m="link" aria-pressed="${!pw}">E-posta ile</button><button data-act="loginMode" data-m="password" aria-pressed="${pw}">Şifre ile</button></div>
+    ${pw ? `<form data-form="pwlogin"><label>E-posta<input type="email" name="email" id="pw-email" autocomplete="username" required></label><label>Şifre<input type="password" name="password" id="pw-pass" autocomplete="current-password" required></label><div class="row"><button class="primary">Giriş yap</button><button type="button" class="link" data-act="loginMode" data-m="link">Şifremi unuttum</button></div><p class="small muted" style="margin-top:12px">Şifreniz yoksa ya da unuttuysanız e-posta ile girin; sonra Hesabım ya da Ayarlar bölümünden şifre belirleyebilirsiniz.</p></form>`
+    : S.loginSent ? `<p>Giriş e-postası <b>${esc(S.loginSent)}</b> adresine gönderildi. E-postadaki bağlantıya tıklayın ya da e-postadaki kodu aşağıya yazın. Portalı telefonunuzun ana ekranından açtıysanız kodu kullanın.</p>
       <form data-form="otp"><label>Kod<input name="code" inputmode="numeric" autocomplete="one-time-code" id="otp" required></label><div class="row"><button class="primary">Doğrula</button><button type="button" class="link" data-act="loginReset">Başka e-posta</button></div></form>`
-    : `<p class="muted">Şifre gerekmez. E-posta adresinize tek kullanımlık bir giriş bağlantısı gönderilir. İlk kez giriyorsanız hesabınız otomatik oluşturulur.</p>
-      <form data-form="login"><label>E-posta<input type="email" name="email" id="email" autocomplete="email" required></label><button class="primary">Giriş bağlantısı gönder</button></form>`}</div>`;
+    : `<p class="muted">E-posta adresinize tek kullanımlık bir giriş bağlantısı ve kod gönderilir. İlk kez giriyorsanız hesabınız otomatik oluşturulur.</p>
+      <form data-form="login"><label>E-posta<input type="email" name="email" id="email" autocomplete="email" required></label><button class="primary">Giriş e-postası gönder</button></form>`}</div>`;
+}
+
+function pwForm() {
+  return `<form class="panel" data-form="setpw" style="margin-top:18px;max-width:560px"><h3>Giriş şifresi</h3><p class="small muted">Şifre belirlerseniz e-posta beklemeden, e-postanız ve şifrenizle girebilirsiniz. Telefonun ana ekranına eklediğiniz portalda en kolay giriş budur. En az 10 karakter olsun ve başka yerde kullanmadığınız bir şifre seçin.</p><div class="grid2f"><label>Yeni şifre<input type="password" name="p1" id="np1" autocomplete="new-password" minlength="10" required></label><label>Yeni şifre (tekrar)<input type="password" name="p2" id="np2" autocomplete="new-password" minlength="10" required></label></div><button>Şifreyi kaydet</button></form>`;
 }
 
 /* --- Psikolog --- */
@@ -486,7 +506,7 @@ function tSettings() {
       <label>E-posta (talep bildirimleri buraya gelir)<input type="email" name="email" id="s-em" value="${esc(s.email)}"></label>
       <label>Adres<textarea name="address" id="s-ad" rows="2">${esc(s.address)}</textarea></label>
       <label>Online görüşme bağlantısı<input name="online_link" id="s-ol" value="${esc(s.online_link)}" placeholder="https://"></label>
-      <button class="primary">Ayarları kaydet</button></div></aside></form>`;
+      <button class="primary">Ayarları kaydet</button></div></aside></form>${pwForm()}`;
 }
 
 /* --- Danışan --- */
@@ -551,7 +571,7 @@ function cAccount() {
   <div class="panel"><h3>${esc([s.title, s.therapist_name].filter(Boolean).join(' ') || 'Psikoloğunuz')}</h3><ul class="list">
     ${s.phone ? `<li>Telefon: ${esc(s.phone)}</li>` : ''}${s.email ? `<li>E-posta: ${esc(s.email)}</li>` : ''}${s.address ? `<li>Adres: ${esc(s.address)}</li>` : ''}
     <li>Seans süresi: ${esc(s.session_minutes)} dakika</li>${s.cancel_policy ? `<li class="small muted">${esc(s.cancel_policy)}</li>` : ''}
-    ${S.me.kvkk_consent_at ? `<li class="small muted">Açık rıza onayınız: ${esc(fShort.format(new Date(S.me.kvkk_consent_at)))}</li>` : ''}</ul></div></div>`;
+    ${S.me.kvkk_consent_at ? `<li class="small muted">Açık rıza onayınız: ${esc(fShort.format(new Date(S.me.kvkk_consent_at)))}</li>` : ''}</ul></div></div>${pwForm()}`;
 }
 
 /* ---------------- Olaylar ---------------- */
@@ -561,6 +581,7 @@ const A = {
   demoRole: async d => { S.api.setRole(d.r); S.tab = null; S.clientId = null; S.draft = null; await load(); },
   logout: async () => { await S.api.signOut(); S.loginSent = ''; await load(); },
   loginReset: () => { S.loginSent = ''; renderLogin(); },
+  loginMode: d => { S.loginMode = d.m; S.loginSent = ''; renderLogin(); },
   approve: d => run(() => S.api.updateAppointment(d.id, { status: 'confirmed' }), 'Randevu onaylandı. Danışana bildirim ve e-posta gidecek.'),
   declineOpen: d => { S.declineId = d.id; render(); $('#decline-msg')?.focus(); },
   declineClose: () => { S.declineId = null; render(); },
@@ -583,6 +604,8 @@ const A = {
 const csv = v => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
 const FORMS = {
   login: async f => { const email = f.email.value.trim(); try { await S.api.signIn(email); S.loginSent = email; renderLogin(); } catch (e) { toast(errMsg(e)); } },
+  pwlogin: async f => { try { await S.api.signInPassword(f.email.value.trim(), f.password.value); await load(); } catch (e) { toast(errMsg(e)); } },
+  setpw: f => { const a = f.p1.value, b = f.p2.value; if (a.length < 10) { toast('Şifre en az 10 karakter olmalı.'); return; } if (a !== b) { toast('İki şifre aynı değil.'); return; } run(() => S.api.setPassword(a), 'Şifreniz kaydedildi. Artık e-posta ve şifrenizle de girebilirsiniz.'); },
   otp: async f => { try { await S.api.verify(S.loginSent, f.code.value.trim()); await load(); } catch (e) { toast('Kod doğrulanamadı: ' + errMsg(e)); } },
   decline: f => { const msg = f.msg.value.trim(); S.declineId = null; run(() => S.api.updateAppointment(f.dataset.id, { status: 'declined', therapist_message: msg || null }), 'Talep reddedildi. Danışana bildirim gidecek.'); },
   newAppt: f => { const t = slotISO(f.d.value, f.t.value); S.showNew = false; run(() => S.api.createAppointment({ client_id: f.client_id.value, starts_at: t, mode: f.mode.value, status: 'confirmed' }), 'Randevu eklendi. Danışana onay bildirimi gidecek.'); },
