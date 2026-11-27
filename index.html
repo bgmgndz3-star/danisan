@@ -199,15 +199,15 @@ function demoApi() {
   const iso = t => new Date(t).toISOString();
   let role = 'therapist', n = 0, demoPw = false; const id = () => 'd' + (++n);
   const T = { id: 't1', email: 'deniz@ornek.com', role: 'therapist', full_name: 'Deniz Aydın' };
-  const settings = { id: 1, practice_name: 'Deniz Aydın Psikolojik Danışmanlık', therapist_name: 'Deniz Aydın', title: 'Uzm. Klinik Psikolog', phone: '0555 000 00 00', email: 'deniz@ornek.com', address: 'Örnek Mah. Huzur Sok. No:5 D:3, Kadıköy / İstanbul', online_link: 'https://meet.ornek.com/deniz-aydin', session_minutes: 50, default_fee: 2500, currency: 'TRY',
+  const settings = { id: 1, practice_name: 'Ruh Sağlığı ve Psikolojik Danışmanlık', therapist_name: 'Deniz Aydın', title: 'Uzm. Klinik Psikolog', phone: '0555 000 00 00', email: 'deniz@ornek.com', address: 'Örnek Mah. Huzur Sok. No:5 D:3, Kadıköy / İstanbul', online_link: 'https://meet.ornek.com/deniz-aydin', session_minutes: 50, default_fee: 2500, currency: 'TRY',
     weekly_hours: { 1: ['10:00', '11:00', '13:00', '14:00', '15:00', '16:00'], 2: ['10:00', '11:00', '13:00', '14:00', '15:00', '16:00'], 3: ['10:00', '11:00', '13:00', '14:00'], 4: ['10:00', '11:00', '13:00', '14:00', '15:00', '16:00'], 5: ['10:00', '11:00', '13:00', '14:00'] },
     blocked_dates: [], horizon_days: 21, min_notice_hours: 12, cancel_hours: 24,
     cancel_policy: 'Seanstan 24 saat öncesine kadar yapılan iptallerde ücret alınmaz. Daha geç iptaller ve gelinmeyen seanslar ücretlendirilir.',
     kvkk_text: 'Randevu bilgilerimin ve seans notlarımın, psikolojik danışmanlık hizmetinin yürütülmesi amacıyla bu portalda saklanmasına ve yalnızca psikoloğum tarafından işlenmesine açık rıza veriyorum.', reminder_hours: [24, 1] };
   const consent = iso(Date.now() - 30 * DAY);
   const clients = [
-    { id: 'c1', role: 'client', full_name: 'Elif Yılmaz', phone: '0555 000 11 22', email: 'elif@ornek.com', fee: 2500, kvkk_consent_at: consent },
-    { id: 'c2', role: 'client', full_name: 'Mert Kaya', phone: '0555 000 33 44', email: 'mert@ornek.com', fee: 2200, kvkk_consent_at: consent },
+    { id: 'c1', role: 'client', full_name: 'Elif Yılmaz', phone: '0555 000 11 22', email: 'elif@ornek.com', fee: 2500, session_interval_days: 7, kvkk_consent_at: consent },
+    { id: 'c2', role: 'client', full_name: 'Mert Kaya', phone: '0555 000 33 44', email: 'mert@ornek.com', fee: 2200, session_interval_days: 14, kvkk_consent_at: consent },
     { id: 'c3', role: 'client', full_name: 'Zeynep Arslan', phone: '0555 000 55 66', email: 'zeynep@ornek.com', fee: null, kvkk_consent_at: iso(Date.now() - 2 * HOUR) },
     { id: 'c4', role: 'client', full_name: 'Can Demir', phone: '0555 000 77 88', email: 'can@ornek.com', fee: 2500, kvkk_consent_at: consent }];
   const A = (client_id, starts_at, status, extra = {}) => ({ id: id(), client_id, starts_at: iso(starts_at), duration_min: 50, mode: 'yuz_yuze', status, client_note: '', fee: clients.find(c => c.id === client_id).fee ?? settings.default_fee, paid: status === 'completed', created_at: iso(+new Date(starts_at) - 5 * DAY), decided_at: iso(+new Date(starts_at) - 4 * DAY), ...extra });
@@ -238,6 +238,7 @@ function demoApi() {
     async getSettings() { return clone(settings); }, async saveSettings(s) { Object.assign(settings, s); },
     async listClients() { return clone(clients); },
     async setClientFee(cid, fee) { clients.find(c => c.id === cid).fee = fee; },
+    async setClientFreq(cid, days) { clients.find(c => c.id === cid).session_interval_days = days; },
     async listAppointments() { return clone(role === 'therapist' ? appts : appts.filter(a => a.client_id === meC().id)); },
     async busySlots() { return clone(appts.filter(a => ['pending', 'confirmed'].includes(a.status)).map(a => ({ starts_at: a.starts_at, duration_min: a.duration_min }))); },
     async requestAppointment(a) {
@@ -290,6 +291,7 @@ async function supaApi() {
     async saveSettings(s) { const { id, updated_at, ...rest } = s; ok(await sb.from('settings').update({ ...rest, updated_at: new Date().toISOString() }).eq('id', 1)); },
     async listClients() { return ok(await sb.from('profiles').select('*').eq('role', 'client').order('full_name')); },
     async setClientFee(cid, fee) { ok(await sb.from('profiles').update({ fee }).eq('id', cid)); },
+    async setClientFreq(cid, days) { ok(await sb.from('profiles').update({ session_interval_days: days, freq_reminded_for: null }).eq('id', cid)); },
     async listAppointments() { return ok(await sb.from('appointments').select('*').order('starts_at')); },
     async busySlots(from, to) { return ok(await sb.rpc('busy_slots', { p_from: from, p_to: to })); },
     async requestAppointment(a) { ok(await sb.from('appointments').insert({ ...a, client_id: uid })); },
@@ -360,6 +362,15 @@ function stats(cid) {
   const due = mine.filter(a => ['completed', 'no_show'].includes(a.status) && !a.paid).reduce((s, a) => s + (+a.fee || 0), 0);
   return { mine, done, last: done[0], next, due };
 }
+const FREQ = [[0, 'Belirlenmedi'], [7, 'Her hafta'], [14, '2 haftada bir'], [21, '3 haftada bir'], [28, '4 haftada bir (ayda bir)']];
+const freqLabel = d => d ? ((FREQ.find(f => f[0] === +d) || [0, d + ' günde bir'])[1]) : 'Belirlenmedi';
+function nextDue(cid, days) {
+  if (!days) return null;
+  const now = Date.now(), mine = S.appts.filter(a => a.client_id === cid);
+  if (mine.some(a => ['pending', 'confirmed'].includes(a.status) && +new Date(a.starts_at) > now)) return 'upcoming';
+  const last = mine.filter(a => ['completed', 'confirmed'].includes(a.status) && +new Date(a.starts_at) <= now).sort((a, b) => b.starts_at.localeCompare(a.starts_at))[0];
+  return last ? new Date(+new Date(last.starts_at) + days * DAY) : null;
+}
 const reminderText = (c, a) => `Merhaba ${(c.full_name || '').split(' ')[0]}, ${when(a.starts_at)} seansımızı hatırlatmak isterim. ${a.mode === 'online' ? (S.settings.online_link ? 'Görüşme bağlantısı: ' + S.settings.online_link : 'Görüşmemiz online olacak.') : (S.settings.address ? 'Adres: ' + S.settings.address : '')} ${S.settings.therapist_name || ''}`.trim();
 const confirmText = (c, a) => `Merhaba ${(c.full_name || '').split(' ')[0]}, ${when(a.starts_at)} tarihli seans randevunuz onaylanmıştır. Görüşmek üzere. ${S.settings.therapist_name || ''}`.trim();
 
@@ -427,9 +438,8 @@ function pushNudge() {
 function kpis() {
   const now = new Date(), today = ymdOf(now), wd = (wdOf(today) + 6) % 7, wStart = +dateOfYmd(addDays(today, -wd)) - 12 * HOUR, wEnd = wStart + 7 * DAY, mon = today.slice(0, 7);
   const week = S.appts.filter(a => ['confirmed', 'completed'].includes(a.status) && +new Date(a.starts_at) >= wStart && +new Date(a.starts_at) < wEnd).length;
-  const inc = S.appts.filter(a => ['completed', 'no_show'].includes(a.status) && a.paid && ymdOf(a.starts_at).slice(0, 7) === mon).reduce((s, a) => s + (+a.fee || 0), 0);
-  const due = S.appts.filter(a => ['completed', 'no_show'].includes(a.status) && !a.paid).reduce((s, a) => s + (+a.fee || 0), 0);
-  return `<div class="kpis"><div class="kpi"><b>${pending().length}</b><span>Bekleyen talep</span></div><div class="kpi"><b>${week}</b><span>Bu haftaki seans</span></div><div class="kpi"><b>${money(inc)}</b><span>Bu ay tahsil edilen</span></div><div class="kpi"><b>${money(due)}</b><span>Bekleyen ödeme</span></div></div>`;
+  const doneMonth = S.appts.filter(a => a.status === 'completed' && ymdOf(a.starts_at).slice(0, 7) === mon).length;
+  return `<div class="kpis"><div class="kpi"><b>${pending().length}</b><span>Bekleyen talep</span></div><div class="kpi"><b>${week}</b><span>Bu haftaki seans</span></div><div class="kpi"><b>${doneMonth}</b><span>Bu ay tamamlanan seans</span></div><div class="kpi"><b>${S.clients.length}</b><span>Danışan</span></div></div>`;
 }
 function dateBlock(t) { const d = new Date(t); return `<div class="date"><b>${fNum.format(d)}</b><span>${esc(fMon.format(d))}</span></div>`; }
 function tRequests() {
@@ -438,7 +448,7 @@ function tRequests() {
     return `<article class="req fade">${dateBlock(a.starts_at)}<div>
       <h3>${esc(c.full_name || c.email || 'Danışan')} ${fresh ? '<span class="chip c-new">Yeni danışan</span>' : ''}</h3>
       <p class="when">${esc(when(a.starts_at))}</p>
-      <p class="muted small">${MODE[a.mode] || ''} · ${a.duration_min} dk · ${money(a.fee)} · ${esc(rel(a.created_at))} talep edildi${st.done.length ? ` · ${st.done.length} seans geçmişi` : ''}</p>
+      <p class="muted small">${MODE[a.mode] || ''} · ${a.duration_min} dk · ${esc(rel(a.created_at))} talep edildi${st.done.length ? ` · ${st.done.length} seans geçmişi` : ''}</p>
       ${a.client_note ? `<blockquote>${esc(a.client_note)}</blockquote>` : ''}
       <div class="row"><button class="primary" data-act="approve" data-id="${esc(a.id)}">Onayla</button><button data-act="declineOpen" data-id="${esc(a.id)}">Reddet / başka saat öner</button></div>
       ${S.declineId === a.id ? `<form data-form="decline" data-id="${esc(a.id)}" style="margin-top:12px"><label>Danışana not (isteğe bağlı)<textarea name="msg" id="decline-msg" placeholder="Örn. Bu saat dolu, Perşembe 15:00 uygun olabilir."></textarea></label><div class="row"><button class="primary">Reddi gönder</button><button type="button" class="link" data-act="declineClose">Vazgeç</button></div></form>` : ''}
@@ -459,7 +469,7 @@ function tAgenda() {
   const up = S.appts.filter(a => a.status === 'confirmed' && !ended(a) && +new Date(a.starts_at) < now + 21 * DAY).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const days = [...new Set(up.map(a => ymdOf(a.starts_at)))];
   const row = (a, past) => { const c = cById(a.client_id), w = waLink(c.phone, reminderText(c, a));
-    return `<li><time>${fTime.format(new Date(a.starts_at))}</time><div><b>${esc(c.full_name)}</b> <span class="muted small">${MODE[a.mode]} · ${a.duration_min} dk · ${money(a.fee)}</span></div><div class="acts">
+    return `<li><time>${fTime.format(new Date(a.starts_at))}</time><div><b>${esc(c.full_name)}</b> <span class="muted small">${MODE[a.mode]} · ${a.duration_min} dk</span></div><div class="acts">
       ${past ? `<button data-act="setStatus" data-s="completed" data-id="${esc(a.id)}">Tamamlandı</button><button data-act="setStatus" data-s="no_show" data-id="${esc(a.id)}">Gelmedi</button>`
         : `${w ? `<a class="btn" href="${esc(w)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<button data-act="cancelT" data-id="${esc(a.id)}">İptal et</button>`}
       <button data-act="writeNote" data-c="${esc(a.client_id)}" data-a="${esc(a.id)}">Not yaz</button><button data-act="openClient" data-c="${esc(a.client_id)}">Dosya</button></div></li>`; };
@@ -475,9 +485,9 @@ function tClients() {
   if (S.clientId) return clientFile(S.clientId);
   const q = (S.q || '').toLocaleLowerCase('tr');
   const rows = S.clients.filter(c => !q || (c.full_name || c.email || '').toLocaleLowerCase('tr').includes(q)).map(c => { const st = stats(c.id);
-    return `<tr class="click" data-act="openClient" data-c="${esc(c.id)}" tabindex="0"><td data-l="Danışan"><b>${esc(c.full_name || '(adı girilmedi)')}</b><br><span class="small muted">${esc(c.phone || c.email || '')}</span></td><td data-l="Son seans" class="nowrap">${st.last ? esc(fShort.format(new Date(st.last.starts_at))) : '—'}</td><td data-l="Sonraki" class="nowrap">${st.next ? esc(fShort.format(new Date(st.next.starts_at))) + (st.next.status === 'pending' ? ' (talep)' : '') : '—'}</td><td data-l="Seans" class="num">${st.done.length}</td><td data-l="Ücret" class="num">${money(c.fee ?? S.settings.default_fee)}</td><td data-l="Bekleyen ödeme" class="num">${st.due ? money(st.due) : '—'}</td></tr>`; }).join('');
+    return `<tr class="click" data-act="openClient" data-c="${esc(c.id)}" tabindex="0"><td data-l="Danışan"><b>${esc(c.full_name || '(adı girilmedi)')}</b><br><span class="small muted">${esc(c.phone || c.email || '')}</span></td><td data-l="Son seans" class="nowrap">${st.last ? esc(fShort.format(new Date(st.last.starts_at))) : '—'}</td><td data-l="Sonraki" class="nowrap">${st.next ? esc(fShort.format(new Date(st.next.starts_at))) + (st.next.status === 'pending' ? ' (talep)' : '') : '—'}</td><td data-l="Seans" class="num">${st.done.length}</td><td data-l="Sıklık">${esc(freqLabel(c.session_interval_days))}</td></tr>`; }).join('');
   return `<div class="spread"><h2 style="margin:0">Danışanlar <span class="muted" style="font-size:18px">${S.clients.length}</span></h2><input id="q" type="search" placeholder="İsimle ara" value="${esc(S.q || '')}" style="max-width:260px" aria-label="Danışan ara"></div>
-    ${S.clients.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Danışan</th><th>Son seans</th><th>Sonraki</th><th class="num">Seans</th><th class="num">Ücret</th><th class="num">Bekleyen ödeme</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">Henüz danışan yok. Danışanlarınız portal adresinden e-postalarıyla giriş yaptığında burada listelenir.</div>'}`;
+    ${S.clients.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Danışan</th><th>Son seans</th><th>Sonraki</th><th class="num">Seans</th><th>Sıklık</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">Henüz danışan yok. Danışanlarınız portal adresinden e-postalarıyla giriş yaptığında burada listelenir.</div>'}`;
 }
 function clientFile(cid) {
   const c = cById(cid), st = stats(cid), notes = S.notes.filter(n => n.client_id === cid), wa = waLink(c.phone, `Merhaba ${(c.full_name || '').split(' ')[0]}, `);
@@ -485,12 +495,12 @@ function clientFile(cid) {
   return `<button class="link" data-act="closeClient">← Tüm danışanlar</button>
   <div class="spread" style="margin-top:8px"><div><h2 style="margin:0">${esc(c.full_name || c.email)}</h2><p class="muted small">${esc(c.phone || '')}${c.phone && c.email ? ' · ' : ''}${esc(c.email || '')}${c.kvkk_consent_at ? ` · KVKK onayı ${esc(fShort.format(new Date(c.kvkk_consent_at)))}` : ''}</p></div>
     <div class="row">${wa ? `<a class="btn" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<button class="primary" data-act="writeNote" data-c="${esc(cid)}">Yeni seans notu</button></div></div>
-  <div class="kpis"><div class="kpi"><b>${st.done.length}</b><span>Tamamlanan seans</span></div><div class="kpi"><b>${st.last ? esc(fShort.format(new Date(st.last.starts_at))) : '—'}</b><span>Son seans</span></div><div class="kpi"><b>${st.next ? esc(fShort.format(new Date(st.next.starts_at))) : '—'}</b><span>Sonraki seans</span></div><div class="kpi"><b>${money(st.due)}</b><span>Bekleyen ödeme</span></div></div>
+  <div class="kpis"><div class="kpi"><b>${st.done.length}</b><span>Tamamlanan seans</span></div><div class="kpi"><b>${st.last ? esc(fShort.format(new Date(st.last.starts_at))) : '—'}</b><span>Son seans</span></div><div class="kpi"><b>${st.next ? esc(fShort.format(new Date(st.next.starts_at))) : '—'}</b><span>Sonraki seans</span></div><div class="kpi"><b style="font-size:20px;white-space:normal">${esc(freqLabel(c.session_interval_days))}</b><span>Seans sıklığı</span></div></div>
   ${S.draft && S.draft.client_id === cid ? noteEditor() : ''}
   <div class="cols"><section><h3 style="margin-bottom:10px">Seans notları</h3>${notes.length ? notes.map(n => noteCard(n, true)).join('') : '<div class="empty">Bu danışana henüz not eklenmedi.</div>'}</section>
-  <aside><form class="panel" data-form="fee" data-c="${esc(cid)}" style="margin-bottom:18px"><label>Seans ücreti (${esc(S.settings.currency || 'TRY')})<input type="number" min="0" step="50" name="fee" id="fee" value="${esc(c.fee ?? '')}" placeholder="Varsayılan: ${esc(S.settings.default_fee)}"></label><button>Ücreti kaydet</button></form>
+  <aside><form class="panel" data-form="freq" data-c="${esc(cid)}" style="margin-bottom:18px"><h3>Seans sıklığı</h3><p class="small muted">Bir sonraki seans zamanı yaklaşınca danışana randevu alması için e-posta ve telefon bildirimi gider. Yaklaşan bir randevusu varsa hatırlatma gönderilmez.</p><label>Sıklık<select name="interval" id="freq">${FREQ.map(([v, l]) => `<option value="${v}" ${(+c.session_interval_days || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>${(() => { const nd = nextDue(cid, c.session_interval_days); return nd === 'upcoming' ? '<p class="small muted">Yaklaşan bir randevusu olduğu için şu an hatırlatma gerekmiyor.</p>' : nd ? `<p class="small">Önerilen sonraki seans: <b>${esc(fDay.format(nd))}</b></p>` : (c.session_interval_days ? '<p class="small muted">İlk seans tamamlanınca önerilen tarih burada görünür.</p>' : ''); })()}<button>Sıklığı kaydet</button></form>
   <div class="panel"><h3>Randevu geçmişi</h3>${hist.length ? `<ul class="list">${hist.map(a => `<li><div class="spread" style="margin:0"><span class="nowrap"><b>${esc(fShort.format(new Date(a.starts_at)))}</b> ${fTime.format(new Date(a.starts_at))}</span>${chip(a.status)}</div>
-    ${['completed', 'no_show'].includes(a.status) ? `<label class="check small" style="margin:6px 0 0"><input type="checkbox" data-act="paid" data-id="${esc(a.id)}" ${a.paid ? 'checked' : ''}> Ödendi · ${money(a.fee)}</label>` : `<span class="small muted">${MODE[a.mode]} · ${money(a.fee)}</span>`}</li>`).join('')}</ul>` : '<p class="muted">Kayıt yok.</p>'}</div></aside></div>`;
+    <span class="small muted">${MODE[a.mode]}</span></li>`).join('')}</ul>` : '<p class="muted">Kayıt yok.</p>'}</div></aside></div>`;
 }
 function noteEditor() {
   const d = S.draft, c = cById(d.client_id), aps = stats(d.client_id).mine.filter(a => ['completed', 'confirmed', 'no_show'].includes(a.status)).sort((a, b) => b.starts_at.localeCompare(a.starts_at)).slice(0, 12);
@@ -522,10 +532,9 @@ function tSettings() {
     <label>Kapalı günler (izin, tatil). Virgülle, YYYY-AA-GG biçiminde<input name="blocked" id="blocked" value="${esc((s.blocked_dates || []).join(', '))}" placeholder="2026-12-31, 2027-01-01"></label></div>
     <div class="panel"><h3>Randevu kuralları</h3><div class="grid2f">
       <label>Seans süresi (dk)<input type="number" name="session_minutes" id="s-min" min="15" value="${esc(s.session_minutes)}"></label>
-      <label>Varsayılan ücret<input type="number" name="default_fee" id="s-fee" min="0" step="50" value="${esc(s.default_fee)}"></label>
       <label>Kaç gün ilerisi açık<input type="number" name="horizon_days" id="s-hor" min="1" max="120" value="${esc(s.horizon_days)}"></label>
       <label>En az kaç saat önceden talep<input type="number" name="min_notice_hours" id="s-not" min="0" value="${esc(s.min_notice_hours)}"></label>
-      <label>Ücretsiz iptal için son saat<input type="number" name="cancel_hours" id="s-can" min="0" value="${esc(s.cancel_hours)}"></label>
+      <label>Uygulamadan iptal için son saat<input type="number" name="cancel_hours" id="s-can" min="0" value="${esc(s.cancel_hours)}"></label>
       <label>Hatırlatma (seanstan kaç saat önce)<input name="reminder_hours" id="s-rem" value="${esc((s.reminder_hours || []).join(', '))}" placeholder="24, 1"></label></div>
       <label>İptal politikası<textarea name="cancel_policy" id="s-pol" rows="3">${esc(s.cancel_policy)}</textarea></label>
       <label>Danışan onay metni (KVKK açık rıza)<textarea name="kvkk_text" id="s-kvkk" rows="4">${esc(s.kvkk_text)}</textarea></label></div></section>
@@ -558,18 +567,19 @@ function nextCard() {
 }
 function cBook() {
   const days = freeSlots(), s = S.settings, p = S.pick;
-  if (!p.day || !days.some(d => d.d === p.day && d.slots.length)) p.day = (days.find(d => d.slots.length) || {}).d || null;
+  const nd = nextDue(S.me.id, S.me.session_interval_days), dueY = nd instanceof Date ? ymdOf(nd) : null;
+  if (!p.day || !days.some(d => d.d === p.day && d.slots.length)) p.day = ((dueY && days.find(d => d.slots.length && d.d >= dueY)) || days.find(d => d.slots.length) || {}).d || null;
   const cur = days.find(d => d.d === p.day);
   if (p.slot && !(cur?.slots || []).includes(p.slot)) p.slot = null;
-  const fee = S.me.fee ?? s.default_fee;
   return `<div class="cols"><section><h2>Randevu al</h2><p class="muted">Boş saatlerden birini seçip talep gönderin. ${esc(s.therapist_name || 'Psikoloğunuz')} onayladığında size bildirim ve e-posta gelir.</p>
+    ${S.me.session_interval_days ? `<p class="panel small" style="padding:12px 14px">Belirlenen seans sıklığınız: <b>${esc(freqLabel(S.me.session_interval_days))}</b>${nd instanceof Date ? ` · Önerilen sonraki seans: <b>${esc(fDay.format(nd))}</b> civarı` : ''}</p>` : ''}
     ${days.some(d => d.slots.length) ? `<div class="days" role="group" aria-label="Gün seçin">${days.map(d => { const dt = dateOfYmd(d.d); return `<button class="day" data-act="pickDay" data-d="${d.d}" aria-pressed="${d.d === p.day}" ${d.slots.length ? '' : 'disabled'}><span>${esc(fWd.format(dt))}</span><b>${fNum.format(dt)}</b><span>${esc(fMon.format(dt))}</span><small>${d.slots.length ? d.slots.length + ' boş' : 'Dolu'}</small></button>`; }).join('')}</div>
     <h3 style="margin-top:16px">${cur ? esc(fDay.format(dateOfYmd(cur.d))) : ''}</h3>
     <div class="slots" role="group" aria-label="Saat seçin">${(cur?.slots || []).map(t => `<button data-act="pickSlot" data-t="${esc(t)}" aria-pressed="${t === p.slot}">${fTime.format(new Date(t))}</button>`).join('')}</div>`
     : '<div class="empty">Önümüzdeki günlerde boş saat görünmüyor. Lütfen daha sonra tekrar bakın ya da psikoloğunuzla iletişime geçin.</div>'}</section>
     <aside><form class="panel" data-form="request"><h3>Talebiniz</h3>
       <p class="when" style="font-size:22px">${p.slot ? esc(when(p.slot)) : '<span class="muted" style="font-size:16px;font-weight:400">Henüz saat seçmediniz</span>'}</p>
-      <p class="small muted">${s.session_minutes} dakika · ${money(fee)}</p>
+      <p class="small muted">${s.session_minutes} dakika</p>
       <label>Görüşme şekli<select name="mode" id="r-mode">${Object.entries(MODE).map(([k, v]) => `<option value="${k}" ${p.mode === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label>Not (isteğe bağlı)<textarea name="client_note" id="r-note" rows="3" placeholder="Psikoloğunuza iletmek istediğiniz kısa bir not">${esc(p.note)}</textarea></label>
       <button class="primary" ${p.slot ? '' : 'disabled'} style="width:100%">Randevu talebi gönder</button>
@@ -580,10 +590,10 @@ function cMine() {
   const past = S.appts.filter(a => !up.includes(a)).sort((a, b) => b.starts_at.localeCompare(a.starts_at));
   const ch = S.settings.cancel_hours || 0;
   return `<h2>Yaklaşan randevular</h2>${up.length ? up.map(a => { const late = a.status === 'confirmed' && +new Date(a.starts_at) - Date.now() < ch * HOUR;
-    return `<article class="req">${dateBlock(a.starts_at)}<div><p class="when">${esc(when(a.starts_at))} ${chip(a.status)}</p><p class="muted small">${MODE[a.mode]} · ${a.duration_min} dk · ${money(a.fee)}</p>
+    return `<article class="req">${dateBlock(a.starts_at)}<div><p class="when">${esc(when(a.starts_at))} ${chip(a.status)}</p><p class="muted small">${MODE[a.mode]} · ${a.duration_min} dk</p>
       ${late ? `<p class="small muted">Seansa ${ch} saatten az kaldığı için iptal için lütfen psikoloğunuzla iletişime geçin${S.settings.phone ? ': ' + esc(S.settings.phone) : '.'}</p>` : `<button data-act="cancelC" data-id="${esc(a.id)}">${a.status === 'pending' ? 'Talebi geri çek' : 'Randevuyu iptal et'}</button>`}</div></article>`; }).join('')
     : `<div class="empty">Yaklaşan randevunuz yok. <button class="link" data-act="tab" data-t="randevu">Randevu alın</button></div>`}
-    <h2 style="margin-top:32px">Geçmiş</h2>${past.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Tarih</th><th>Şekil</th><th>Durum</th><th class="num">Ücret</th></tr></thead><tbody>${past.map(a => `<tr><td data-l="Tarih" class="nowrap">${esc(fShort.format(new Date(a.starts_at)))} ${fTime.format(new Date(a.starts_at))}</td><td data-l="Şekil">${MODE[a.mode]}</td><td data-l="Durum">${chip(a.status)}${a.therapist_message ? `<br><span class="small muted">${esc(a.therapist_message)}</span>` : ''}</td><td data-l="Ücret" class="num">${['completed', 'no_show'].includes(a.status) ? money(a.fee) + (a.paid ? ' · ödendi' : '') : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Henüz geçmiş randevu yok.</p>'}`;
+    <h2 style="margin-top:32px">Geçmiş</h2>${past.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Tarih</th><th>Şekil</th><th>Durum</th></tr></thead><tbody>${past.map(a => `<tr><td data-l="Tarih" class="nowrap">${esc(fShort.format(new Date(a.starts_at)))} ${fTime.format(new Date(a.starts_at))}</td><td data-l="Şekil">${MODE[a.mode]}</td><td data-l="Durum">${chip(a.status)}${a.therapist_message ? `<br><span class="small muted">${esc(a.therapist_message)}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Henüz geçmiş randevu yok.</p>'}`;
 }
 function cNotes() {
   return `<h2>Seans notlarım</h2><p class="muted">${esc(S.settings.therapist_name || 'Psikoloğunuz')} her seanstan sonra çıkarımları buraya ekler. Bu notları yalnızca siz görebilirsiniz.</p>
@@ -597,7 +607,7 @@ function cNotifs() {
 }
 function cAccount() {
   const s = S.settings, st = stats(S.me.id);
-  return `<h2>Hesabım</h2><div class="kpis"><div class="kpi"><b>${st.done.length}</b><span>Tamamlanan seans</span></div><div class="kpi"><b>${st.last ? esc(fShort.format(new Date(st.last.starts_at))) : '—'}</b><span>Son seans</span></div><div class="kpi"><b>${money(S.me.fee ?? s.default_fee)}</b><span>Seans ücreti</span></div>${st.due ? `<div class="kpi"><b>${money(st.due)}</b><span>Ödenecek tutar</span></div>` : ''}</div>
+  return `<h2>Hesabım</h2><div class="kpis"><div class="kpi"><b>${st.done.length}</b><span>Tamamlanan seans</span></div><div class="kpi"><b>${st.last ? esc(fShort.format(new Date(st.last.starts_at))) : '—'}</b><span>Son seans</span></div><div class="kpi"><b style="font-size:20px;white-space:normal">${esc(freqLabel(S.me.session_interval_days))}</b><span>Seans sıklığı</span></div></div>
   <div class="cols"><form class="panel" data-form="profile"><h3>Bilgilerim</h3><label>Ad soyad<input name="full_name" id="p-name" value="${esc(S.me.full_name)}" required></label><label>Telefon<input name="phone" id="p-phone" type="tel" value="${esc(S.me.phone)}"></label><p class="small muted">E-posta: ${esc(S.me.email || '')}</p><button>Kaydet</button></form>
   <div class="panel"><h3>${esc([s.title, s.therapist_name].filter(Boolean).join(' ') || 'Psikoloğunuz')}</h3><ul class="list">
     ${s.phone ? `<li>Telefon: ${esc(s.phone)}</li>` : ''}${s.email ? `<li>E-posta: ${esc(s.email)}</li>` : ''}${s.address ? `<li>Adres: ${esc(s.address)}</li>` : ''}
@@ -661,14 +671,14 @@ const FORMS = {
   otp: async f => { try { await S.api.verify(S.loginSent, f.code.value.trim()); await load(); } catch (e) { toast('Kod doğrulanamadı: ' + errMsg(e)); } },
   decline: f => { const msg = f.msg.value.trim(); S.declineId = null; run(() => S.api.updateAppointment(f.dataset.id, { status: 'declined', therapist_message: msg || null }), 'Talep reddedildi. Danışana bildirim gidecek.'); },
   newAppt: f => { const t = slotISO(f.d.value, f.t.value); S.showNew = false; run(() => S.api.createAppointment({ client_id: f.client_id.value, starts_at: t, mode: f.mode.value, status: 'confirmed' }), 'Randevu eklendi. Danışana onay bildirimi gidecek.'); },
-  fee: f => run(() => S.api.setClientFee(f.dataset.c, f.fee.value === '' ? null : +f.fee.value), 'Ücret kaydedildi.'),
+  freq: f => { const v = +f.interval.value || null; run(() => S.api.setClientFreq(f.dataset.c, v), v ? 'Seans sıklığı kaydedildi. Zamanı yaklaşınca danışana hatırlatma gidecek.' : 'Seans sıklığı kaldırıldı.'); },
   note: f => { const d = S.draft, pts = draftPoints(); if (!pts.length) { toast('En az bir madde yazın.'); return; }
     const body = { id: d.id, client_id: d.client_id, session_date: d.session_date, appointment_id: d.appointment_id || null, title: (d.title || '').trim() || 'Seans çıkarımları', points: pts, homework: (d.homework || '').trim() || null };
     run(async () => { await S.api.saveNote(body); S.draft = null; }, d.id ? 'Not güncellendi.' : 'Not danışanın portalına eklendi.'); },
   settings: f => { const wh = {}; for (const d of [0, 1, 2, 3, 4, 5, 6]) { const v = csv(f.elements['wh' + d].value); const bad = v.find(x => !/^([01]\d|2[0-3]):[0-5]\d$/.test(x)); if (bad) { toast(`${WD[d]} için “${bad}” geçerli bir saat değil (örn. 09:00).`); return; } if (v.length) wh[d] = [...new Set(v)].sort(); }
     const bl = csv(f.elements.blocked.value); if (bl.some(x => !/^\d{4}-\d{2}-\d{2}$/.test(x))) { toast('Kapalı günleri YYYY-AA-GG biçiminde yazın.'); return; }
     const el = k => f.elements[k].value, num = k => el(k) === '' ? null : +el(k);
-    const s = { ...S.settings, weekly_hours: wh, blocked_dates: bl, session_minutes: num('session_minutes') || 50, default_fee: num('default_fee') || 0, horizon_days: num('horizon_days') || 21, min_notice_hours: num('min_notice_hours') || 0, cancel_hours: num('cancel_hours') || 0,
+    const s = { ...S.settings, weekly_hours: wh, blocked_dates: bl, session_minutes: num('session_minutes') || 50, horizon_days: num('horizon_days') || 21, min_notice_hours: num('min_notice_hours') || 0, cancel_hours: num('cancel_hours') || 0,
       reminder_hours: csv(el('reminder_hours')).map(Number).filter(n => n > 0), cancel_policy: el('cancel_policy').trim(), kvkk_text: el('kvkk_text').trim() };
     for (const k of ['practice_name', 'therapist_name', 'title', 'phone', 'email', 'address', 'online_link']) s[k] = el(k).trim();
     run(() => S.api.saveSettings(s), 'Ayarlar kaydedildi.'); },
