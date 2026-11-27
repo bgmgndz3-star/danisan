@@ -180,7 +180,7 @@ const waLink = (phone, text) => { let d = String(phone || '').replace(/\D/g, '')
   return `https://wa.me/${d}?text=${encodeURIComponent(text)}`; };
 
 const S = { api: null, me: null, settings: null, clients: [], appts: [], notes: [], notifs: [], busy: [], tab: null, clientId: null,
-  pick: { day: null, slot: null, mode: 'yuz_yuze', note: '' }, draft: null, showNew: false, declineId: null, loginSent: '', loginMode: 'link', hasPw: false, pwEdit: false, loaded: false };
+  pick: { day: null, slot: null, mode: 'yuz_yuze', note: '' }, draft: null, showNew: false, declineId: null, loginSent: '', loginMode: 'link', hasPw: false, pwEdit: false, pushOn: false, pushDismiss: false, loaded: false };
 
 function toast(m) { const d = document.createElement('div'); d.className = 'fade'; d.textContent = m; $('#toast').append(d); setTimeout(() => d.remove(), 4200); }
 function ask(title, text, ok = 'Evet', danger) {
@@ -232,7 +232,7 @@ function demoApi() {
   const clone = x => JSON.parse(JSON.stringify(x));
   return {
     demo: true, setRole(r) { role = r; },
-    async session() { return true; }, async signOut() {}, async setPassword() { demoPw = true; }, async hasPassword() { return demoPw; },
+    async session() { return true; }, async signOut() {}, async setPassword() { demoPw = true; }, async hasPassword() { return demoPw; }, async savePush() {}, async deletePush() {},
     async me() { return clone(role === 'therapist' ? T : meC()); },
     async saveProfile(p) { Object.assign(role === 'therapist' ? T : meC(), p); },
     async getSettings() { return clone(settings); }, async saveSettings(s) { Object.assign(settings, s); },
@@ -280,6 +280,8 @@ async function supaApi() {
     async verify(email, token) { ok(await sb.auth.verifyOtp({ email, token, type: 'email' })); },
     async signInPassword(email, password) { ok(await sb.auth.signInWithPassword({ email, password })); try { await sb.auth.updateUser({ data: { pw_set: true } }); } catch (e) {} },
     async setPassword(password) { ok(await sb.auth.updateUser({ password, data: { pw_set: true } })); },
+    async savePush(endpoint, p256dh, auth, ua) { ok(await sb.rpc('save_push_subscription', { p_endpoint: endpoint, p_p256dh: p256dh, p_auth: auth, p_ua: ua })); },
+    async deletePush(endpoint) { ok(await sb.rpc('delete_push_subscription', { p_endpoint: endpoint })); },
     async hasPassword() { const u = (await sb.auth.getUser()).data.user; return !!(u && u.user_metadata && u.user_metadata.pw_set); },
     async signOut() { await sb.auth.signOut(); },
     async me() { if (!uid) return null; return ok(await sb.from('profiles').select('*').eq('id', uid).single()); },
@@ -374,7 +376,7 @@ function render() {
   renderShell();
   if (!isT() && (!S.me.full_name || !S.me.kvkk_consent_at)) { $('#app').innerHTML = viewOnboard(); return; }
   const v = { talepler: tRequests, ajanda: tAgenda, danisanlar: tClients, ayarlar: tSettings, randevu: cBook, randevularim: cMine, notlar: cNotes, bildirimler: cNotifs, hesap: cAccount }[S.tab];
-  $('#app').innerHTML = (isT() ? kpis() : nextCard()) + v();
+  $('#app').innerHTML = (isT() ? kpis() : pushNudge() + nextCard()) + v();
   if (S.tab === 'notlar') markNotesRead();
   if (S.tab === 'bildirimler' && unreadNotifs()) S.api.markNotificationsRead().then(() => { S.notifs.forEach(n => n.read_at = n.read_at || new Date().toISOString()); renderShell(); });
 }
@@ -393,6 +395,32 @@ function renderLogin() {
 function pwForm() {
   if (S.hasPw && !S.pwEdit) return `<div class="panel" style="margin-top:18px;max-width:560px"><h3>Giriş şifresi</h3><p><span class="chip c-confirmed">Şifre belirlendi</span></p><p class="small muted">E-postanız ve şifrenizle giriş yapabilirsiniz. Şifrenizi unutursanız giriş ekranında E-posta ile girip buradan yenisini belirleyebilirsiniz.</p><button data-act="pwEdit">Şifreyi değiştir</button></div>`;
   return `<form class="panel" data-form="setpw" style="margin-top:18px;max-width:560px"><h3>${S.hasPw ? 'Şifreyi değiştir' : 'Giriş şifresi belirle'}</h3><p class="small muted">${S.hasPw ? 'Yeni şifreniz eskisinin yerine geçer.' : 'Şifre belirlerseniz e-posta beklemeden, e-postanız ve şifrenizle girebilirsiniz. Telefonun ana ekranına eklediğiniz portalda en kolay giriş budur.'} En az 10 karakter olsun ve başka yerde kullanmadığınız bir şifre seçin.</p><div class="grid2f"><label>Yeni şifre<input type="password" name="p1" id="np1" autocomplete="new-password" minlength="10" required></label><label>Yeni şifre (tekrar)<input type="password" name="p2" id="np2" autocomplete="new-password" minlength="10" required></label></div><div class="row"><button class="primary">Şifreyi kaydet</button>${S.hasPw ? '<button type="button" class="link" data-act="pwCancel">Vazgeç</button>' : ''}</div></form>`;
+}
+
+/* --- Telefon bildirimleri --- */
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && typeof Notification !== 'undefined';
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+let swReg = null;
+function b64u(s) { const p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); }
+async function refreshPush() {
+  try { const sub = swReg && await swReg.pushManager.getSubscription(); S.pushOn = !!sub && Notification.permission === 'granted'; } catch (e) { S.pushOn = false; }
+  const f = document.activeElement;
+  if (S.loaded && S.me && !(f && f.closest && f.closest('#app form'))) render();
+}
+function pushPanel() {
+  const what = isT() ? 'Yeni randevu talepleri ve iptaller' : 'Randevu onayları, seans hatırlatmaları ve yeni seans notları';
+  let body;
+  if (S.pushOn) body = `<p><span class="chip c-confirmed">Bu cihazda açık</span></p><p class="small muted">${what} bu cihaza bildirim olarak gelir.</p><button data-act="pushOff">Bu cihazda kapat</button>`;
+  else if (isIOS && !standalone()) body = `<p class="small muted">iPhone'da bildirim alabilmek için portalı önce ana ekrana ekleyin: Safari'de <b>Paylaş</b> düğmesine dokunup <b>Ana Ekrana Ekle</b>'yi seçin. Sonra portalı ana ekrandaki simgeden açıp buradan bildirimleri açın.</p>`;
+  else if (!pushSupported()) body = `<p class="small muted">Bu tarayıcı bildirimleri desteklemiyor.</p>`;
+  else if (Notification.permission === 'denied') body = `<p class="small muted">Bu cihazda bildirim izni kapalı. Açmak için cihazın ya da tarayıcının ayarlarından bu siteye bildirim izni verin.</p>`;
+  else body = `<p class="small muted">${what} telefonunuza bildirim olarak gelsin.</p><button class="primary" data-act="pushOn">Bildirimleri aç</button>`;
+  return `<div class="panel" style="margin-top:18px;max-width:560px"><h3>Telefon bildirimleri</h3>${body}</div>`;
+}
+function pushNudge() {
+  if (S.pushOn || S.pushDismiss || !pushSupported() || !standalone() || Notification.permission !== 'default') return '';
+  return `<div class="panel fade" style="margin-bottom:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between"><span>Randevu onayları ve seans hatırlatmaları telefonunuza bildirim olarak gelsin mi?</span><span class="row"><button class="primary" data-act="pushOn">Bildirimleri aç</button><button class="link" data-act="pushLater">Şimdi değil</button></span></div>`;
 }
 
 /* --- Psikolog --- */
@@ -509,7 +537,7 @@ function tSettings() {
       <label>E-posta (talep bildirimleri buraya gelir)<input type="email" name="email" id="s-em" value="${esc(s.email)}"></label>
       <label>Adres<textarea name="address" id="s-ad" rows="2">${esc(s.address)}</textarea></label>
       <label>Online görüşme bağlantısı<input name="online_link" id="s-ol" value="${esc(s.online_link)}" placeholder="https://"></label>
-      <button class="primary">Ayarları kaydet</button></div></aside></form>${pwForm()}`;
+      <button class="primary">Ayarları kaydet</button></div></aside></form>${pushPanel()}${pwForm()}`;
 }
 
 /* --- Danışan --- */
@@ -574,7 +602,7 @@ function cAccount() {
   <div class="panel"><h3>${esc([s.title, s.therapist_name].filter(Boolean).join(' ') || 'Psikoloğunuz')}</h3><ul class="list">
     ${s.phone ? `<li>Telefon: ${esc(s.phone)}</li>` : ''}${s.email ? `<li>E-posta: ${esc(s.email)}</li>` : ''}${s.address ? `<li>Adres: ${esc(s.address)}</li>` : ''}
     <li>Seans süresi: ${esc(s.session_minutes)} dakika</li>${s.cancel_policy ? `<li class="small muted">${esc(s.cancel_policy)}</li>` : ''}
-    ${S.me.kvkk_consent_at ? `<li class="small muted">Açık rıza onayınız: ${esc(fShort.format(new Date(S.me.kvkk_consent_at)))}</li>` : ''}</ul></div></div>${pwForm()}`;
+    ${S.me.kvkk_consent_at ? `<li class="small muted">Açık rıza onayınız: ${esc(fShort.format(new Date(S.me.kvkk_consent_at)))}</li>` : ''}</ul></div></div>${pushPanel()}${pwForm()}`;
 }
 
 /* ---------------- Olaylar ---------------- */
@@ -587,6 +615,25 @@ const A = {
   loginMode: d => { S.loginMode = d.m; S.loginSent = ''; renderLogin(); },
   pwEdit: () => { S.pwEdit = true; render(); $('#np1')?.focus(); },
   pwCancel: () => { S.pwEdit = false; render(); },
+  pushLater: () => { S.pushDismiss = true; render(); },
+  pushOn: async () => {
+    try {
+      if (!pushSupported()) { toast(isIOS && !standalone() ? "iPhone'da bildirim için önce portalı Ana Ekrana ekleyip oradan açın." : 'Bu tarayıcı bildirimleri desteklemiyor.'); return; }
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { toast('Bildirim izni verilmedi. İsterseniz cihaz ayarlarından açabilirsiniz.'); return; }
+      const key = S.settings && S.settings.vapid_public;
+      if (!key) { toast('Bildirim altyapısı birkaç dakika içinde hazır olacak. Lütfen biraz sonra tekrar deneyin.'); return; }
+      const reg = swReg || await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(key) });
+      const j = sub.toJSON();
+      await S.api.savePush(j.endpoint, j.keys.p256dh, j.keys.auth, navigator.userAgent.slice(0, 200));
+      S.pushOn = true; render(); toast('Bildirimler açıldı. Haberler artık bu cihaza da gelecek.');
+    } catch (e) { console.error(e); toast('Bildirimler açılamadı: ' + errMsg(e)); }
+  },
+  pushOff: async () => {
+    try { const reg = swReg || await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) { await S.api.deletePush(sub.endpoint).catch(() => {}); await sub.unsubscribe(); } S.pushOn = false; render(); toast('Bu cihazda bildirimler kapatıldı.'); }
+    catch (e) { toast(errMsg(e)); }
+  },
   approve: d => run(() => S.api.updateAppointment(d.id, { status: 'confirmed' }), 'Randevu onaylandı. Danışana bildirim ve e-posta gidecek.'),
   declineOpen: d => { S.declineId = d.id; render(); $('#decline-msg')?.focus(); },
   declineClose: () => { S.declineId = null; render(); },
@@ -643,7 +690,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && S.
 setInterval(() => { if (!document.hidden && S.loaded && !S.api.demo) load(true); }, 60000);
 
 (async () => {
-  try { S.api = CFG ? await supaApi() : demoApi(); await load(); }
+  try { S.api = CFG ? await supaApi() : demoApi(); await load(); if (CFG && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(r => { swReg = r; refreshPush(); }).catch(e => console.warn('sw', e)); }
   catch (e) { console.error(e); $('#app').innerHTML = `<div class="empty">Uygulama başlatılamadı: ${esc(errMsg(e))}</div>`; }
 })();
 }
