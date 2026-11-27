@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Portal">
-<link rel="apple-touch-icon" href="icon-gold-180.png">
-<link rel="icon" type="image/png" href="icon-gold-192.png">
-<link rel="manifest" href="manifest.json?v=2">
+<link rel="apple-touch-icon" href="icon-logo-180.png">
+<link rel="icon" type="image/png" href="icon-logo-192.png">
+<link rel="manifest" href="manifest.json?v=3">
 <title>Danışan Portalı</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,6 +39,8 @@ a{color:inherit}
 .top .wrap{padding-block:22px 0}
 .brand{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end}
 .brand h1{font-size:clamp(26px,4vw,38px);font-weight:600;color:var(--gold)}
+.brandrow{display:flex;align-items:center;gap:clamp(12px,2vw,20px)}
+.logo{width:clamp(56px,8vw,84px);height:auto;aspect-ratio:1;border-radius:50%;flex:none;display:block}
 .brand p{margin:4px 0 0;opacity:.8}
 .who{font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .tabs{display:flex;gap:4px;margin-top:20px;overflow-x:auto;scrollbar-width:none}
@@ -141,7 +143,7 @@ tr.click:hover td{background:var(--soft)}
   <span class="small">Tüm kişiler ve notlar örnektir; e-postalar demoda gönderilmez.</span>
 </div></div>
 <header class="top"><div class="wrap">
-  <div class="brand"><div><h1 id="pname">Danışan Portalı</h1><p id="psub"></p></div><div class="who" id="who"></div></div>
+  <div class="brand"><div class="brandrow"><img class="logo" src="logo-256.png" alt="" width="84" height="84"><div><h1 id="pname">Danışan Portalı</h1><p id="psub"></p></div></div><div class="who" id="who"></div></div>
   <nav class="tabs" id="tabs" aria-label="Bölümler"></nav>
 </div></header>
 <main class="wrap" id="app"><p class="muted">Yükleniyor…</p></main>
